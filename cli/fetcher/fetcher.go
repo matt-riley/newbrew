@@ -51,7 +51,7 @@ func fetchNewFormulaPRs(since time.Time) ([]int, map[int]models.FormulaInfo, err
 	if err != nil {
 		return nil, nil, err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	var result models.SearchResult
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 		return nil, nil, err
@@ -77,7 +77,7 @@ func fetchPRFiles(prNumber int) ([]models.File, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	var files []models.File
 	if err := json.NewDecoder(resp.Body).Decode(&files); err != nil {
 		return nil, err
@@ -90,7 +90,7 @@ func fetchDescAndHomepageFromFormula(rawURL string) (desc, homepage string, err 
 	if err != nil {
 		return "", "", err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	scanner := bufio.NewScanner(resp.Body)
 	reDesc := regexp.MustCompile(`^\s*desc\s+["']([^"']+)["']`)
 	reHome := regexp.MustCompile(`^\s*homepage\s+["']([^"']+)["']`)

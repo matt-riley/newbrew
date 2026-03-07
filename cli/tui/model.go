@@ -12,10 +12,8 @@ import (
 )
 
 type model struct {
-	list list.Model
-	// formulae   []models.FormulaInfo
+	list       list.Model
 	spinner    spinner.Model
-	cursor     int
 	loaded     bool
 	err        error
 	cached     bool
