@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os/exec"
 	"runtime"
+	"strings"
 
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/spinner"
@@ -24,6 +25,10 @@ var openBrowser = func(url string) error {
 		return fmt.Errorf("unsupported platform")
 	}
 	return cmd.Start()
+}
+
+func isBrowsableHomepage(homepage string) bool {
+	return strings.HasPrefix(homepage, "https://") || strings.HasPrefix(homepage, "http://")
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -50,13 +55,17 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.refreshing = true
 			return m, tea.Batch(func() tea.Msg {
 				c, err := cache.NewCache()
+				if err != nil {
+					return loadedMsg{nil, err, false}
+				}
 				formulae, err := fetcher.FetchAndCache(c)
 				return loadedMsg{formulae, err, false}
 			}, m.spinner.Tick)
 		case "enter":
 			if selected, ok := m.list.SelectedItem().(formulaItem); ok {
-				if selected.Homepage != "" {
-					_ = openBrowser(selected.Homepage)
+				homepage := strings.TrimSpace(selected.Homepage)
+				if isBrowsableHomepage(homepage) {
+					_ = openBrowser(homepage)
 				}
 			}
 		}

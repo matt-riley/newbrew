@@ -50,7 +50,7 @@ func (c *Cache) Load() error {
 	if err != nil {
 		return err
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 	err = json.NewDecoder(f).Decode(c)
 	if err == io.EOF {
 		return nil
@@ -70,7 +70,7 @@ func (c *Cache) Save(formulae []models.FormulaInfo) error {
 	if err != nil {
 		return err
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 	c.Timestamp = time.Now()
 	c.Formulae = formulae
 
