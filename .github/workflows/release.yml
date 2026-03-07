@@ -5,6 +5,12 @@ on:
     branches: [main]
   workflow_dispatch:
 
+concurrency:
+  # Queue release runs so a newer push cannot cancel an in-flight GoReleaser
+  # publish before the Homebrew tap update lands.
+  group: ${{ github.workflow }}:${{ github.ref }}
+  cancel-in-progress: false
+
 permissions:
   contents: write
   issues: write
