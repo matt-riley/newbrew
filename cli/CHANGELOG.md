@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.2](https://github.com/matt-riley/newbrew/compare/v0.1.1...v0.1.2) (2026-03-07)
+
+
+### Bug Fixes
+
+* **deps:** align charmbracelet v2 module paths ([cfe4706](https://github.com/matt-riley/newbrew/commit/cfe4706b7d2a4222918fd4aefd93c035158d7e24))
+* **deps:** update charmbracelet tui to v2 ([13ebdfa](https://github.com/matt-riley/newbrew/commit/13ebdfacd040b5224538e47a19d60d64fdc98e92))
+
 ## [0.1.1](https://github.com/matt-riley/newbrew/compare/v0.1.0...v0.1.1) (2026-03-07)
 
 
