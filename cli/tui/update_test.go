@@ -3,8 +3,8 @@ package tui
 import (
 	"testing"
 
-	"github.com/charmbracelet/bubbles/list"
-	tea "github.com/charmbracelet/bubbletea"
+	"charm.land/bubbles/v2/list"
+	tea "charm.land/bubbletea/v2"
 
 	"github.com/matt-riley/newbrew/models"
 )
@@ -32,38 +32,38 @@ func TestCursorMovement(t *testing.T) {
 		t.Errorf("expected initial index 0, got %d", m.list.Index())
 	}
 
-	m2, _ := m.Update(tea.KeyMsg{Type: tea.KeyDown})
+	m2, _ := m.Update(tea.KeyPressMsg{Code: tea.KeyDown})
 	m = m2.(model)
 	if m.list.Index() != 1 {
 		t.Errorf("expected index 1 after down, got %d", m.list.Index())
 	}
 
-	m3, _ := m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'j'}})
+	m3, _ := m.Update(tea.KeyPressMsg{Code: 'j', Text: "j"})
 	m = m3.(model)
 	if m.list.Index() != 2 {
 		t.Errorf("expected index 2 after j, got %d", m.list.Index())
 	}
 
-	m4, _ := m.Update(tea.KeyMsg{Type: tea.KeyUp})
+	m4, _ := m.Update(tea.KeyPressMsg{Code: tea.KeyUp})
 	m = m4.(model)
 	if m.list.Index() != 1 {
 		t.Errorf("expected index 1 after up, got %d", m.list.Index())
 	}
 
-	m5, _ := m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'k'}})
+	m5, _ := m.Update(tea.KeyPressMsg{Code: 'k', Text: "k"})
 	m = m5.(model)
 	if m.list.Index() != 0 {
 		t.Errorf("expected index 0 after k, got %d", m.list.Index())
 	}
 
-	m6, _ := m.Update(tea.KeyMsg{Type: tea.KeyUp})
+	m6, _ := m.Update(tea.KeyPressMsg{Code: tea.KeyUp})
 	m = m6.(model)
 	if m.list.Index() != 0 {
 		t.Errorf("expected index 0 at top boundary, got %d", m.list.Index())
 	}
 
 	m.list.Select(len(formulae) - 1)
-	m7, _ := m.Update(tea.KeyMsg{Type: tea.KeyDown})
+	m7, _ := m.Update(tea.KeyPressMsg{Code: tea.KeyDown})
 	m = m7.(model)
 	if m.list.Index() != len(formulae)-1 {
 		t.Errorf("expected index %d at bottom boundary, got %d", len(formulae)-1, m.list.Index())
@@ -82,7 +82,7 @@ func TestOpenBrowserNotCalledOnInvalidHomepage(t *testing.T) {
 		{PRTitle: "foo", Desc: "desc", Homepage: "(not found)"},
 	})
 
-	_, _ = m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	_, _ = m.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
 
 	if called {
 		t.Errorf("openBrowser should not be called for non-URL homepage")
@@ -103,7 +103,7 @@ func TestOpenBrowserCalledForValidHomepage(t *testing.T) {
 		{PRTitle: "foo", Desc: "desc", Homepage: "https://foo.example.com"},
 	})
 
-	_, _ = m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	_, _ = m.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
 
 	if !called {
 		t.Errorf("openBrowser should be called for valid homepage")
