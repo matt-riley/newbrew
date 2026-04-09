@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.4](https://github.com/matt-riley/newbrew/compare/v0.1.3...v0.1.4) (2026-04-09)
+
+
+### Bug Fixes
+
+* **ci:** bump Go to 1.26.2 ([046db8a](https://github.com/matt-riley/newbrew/commit/046db8a6cdb08c47058f31349ecad028cd820876))
+
 ## [0.1.3](https://github.com/matt-riley/newbrew/compare/v0.1.2...v0.1.3) (2026-03-27)
 
 
