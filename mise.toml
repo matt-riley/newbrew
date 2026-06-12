@@ -1,0 +1,26 @@
+[tools]
+go = "1.26.2"
+golangci-lint = "latest"
+
+[tasks.test]
+description = "Run tests"
+run = "cd cli && go test ./..."
+
+[tasks.vet]
+description = "Run go vet"
+run = "cd cli && go vet ./..."
+
+[tasks.fmt]
+description = "Check Go formatting"
+run = """
+cd cli
+if [ -n "$(gofmt -l .)" ]; then
+  echo "Error: Code is not formatted with gofmt"
+  gofmt -l .
+  exit 1
+fi
+"""
+
+[tasks.lint]
+description = "Run golangci-lint"
+run = "cd cli && golangci-lint run"

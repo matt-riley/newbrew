@@ -7,29 +7,21 @@ on:
 
 permissions:
   contents: read
+  packages: read
 
 jobs:
-  test:
-    uses: matt-riley/matt-riley-ci/.github/workflows/go-ci.yml@7bf33bf0eef269c4a4b1d85e1668dec14fb8ffff # v1
+  ci:
+    uses: matt-riley/matt-riley-ci/.github/workflows/ci.yml@v2
     with:
-      go-version-file: cli/go.mod
-      working-directory: cli
-      run-fmt: true
-
-  lint:
-    # The shared reusable Go workflows currently resolve to the same concurrency group,
-    # so queue them one at a time here to avoid intermittent job cancellation.
-    needs: test
-    if: ${{ always() }}
-    uses: matt-riley/matt-riley-ci/.github/workflows/go-lint.yml@7bf33bf0eef269c4a4b1d85e1668dec14fb8ffff # v1
-    with:
-      go-version-file: cli/go.mod
-      working-directory: cli
+      test: true
+      lint: true
+      vet: true
+      fmt: true
 
   govulncheck:
-    needs: lint
+    needs: ci
     if: ${{ always() }}
-    uses: matt-riley/matt-riley-ci/.github/workflows/go-security.yml@7bf33bf0eef269c4a4b1d85e1668dec14fb8ffff # v1
+    uses: matt-riley/matt-riley-ci/.github/workflows/go-security.yml@v2
     with:
       go-version-file: cli/go.mod
       working-directory: cli
