@@ -34,7 +34,6 @@ type Config struct {
 
 type model struct {
 	config     Config
-	fetcher    *fetcher.Fetcher
 	list       list.Model
 	spinner    spinner.Model
 	loaded     bool
@@ -106,7 +105,6 @@ func NewModel(config Config) model {
 
 	return model{
 		config:  config,
-		fetcher: config.Fetcher,
 		spinner: s,
 		list:    l,
 	}

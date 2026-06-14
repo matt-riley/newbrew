@@ -30,12 +30,21 @@ func browserCommand(goos, url string) (*exec.Cmd, error) {
 	case "windows":
 		return exec.Command("rundll32", "url.dll,FileProtocolHandler", url), nil
 	default:
-		return nil, fmt.Errorf("unsupported platform")
+		return nil, fmt.Errorf("unsupported platform: %s", goos)
 	}
 }
 
 func isBrowsableHomepage(homepage string) bool {
 	return strings.HasPrefix(homepage, "https://") || strings.HasPrefix(homepage, "http://")
+}
+
+func openBrowserCmd(url string) tea.Cmd {
+	return func() tea.Msg {
+		if err := openBrowser(url); err != nil {
+			return browserOpenErrMsg{err: err}
+		}
+		return nil
+	}
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -78,8 +87,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if selected, ok := m.list.SelectedItem().(formulaItem); ok {
 				homepage := strings.TrimSpace(selected.Homepage)
 				if isBrowsableHomepage(homepage) {
-					m.err = openBrowser(homepage)
-					return m, nil
+					return m, openBrowserCmd(homepage)
 				}
 			}
 		}

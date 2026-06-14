@@ -108,7 +108,11 @@ func TestOpenBrowserCalledForValidHomepage(t *testing.T) {
 		{PRTitle: "foo", Desc: "desc", Homepage: "https://foo.example.com"},
 	})
 
-	_, _ = m.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
+	_, cmd := m.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
+	if cmd == nil {
+		t.Fatalf("expected enter to return a browser-open command")
+	}
+	_ = cmd()
 
 	if !called {
 		t.Errorf("openBrowser should be called for valid homepage")
@@ -226,7 +230,10 @@ func TestBrowserOpenFailureSurfacesError(t *testing.T) {
 	})
 	m.config = Config{Days: 5}
 
-	nextModel, _ := m.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
+	nextModel, cmd := m.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
+	m = nextModel.(model)
+	msg := cmd()
+	nextModel, _ = m.Update(msg)
 	m = nextModel.(model)
 
 	if m.err == nil {
@@ -255,6 +262,16 @@ func TestBrowserCommandSupportsWindows(t *testing.T) {
 	}
 	if got := cmd.Path; !strings.Contains(strings.ToLower(got), "rundll32") {
 		t.Fatalf("expected rundll32 command path, got %q", got)
+	}
+}
+
+func TestBrowserCommandIncludesUnsupportedPlatformInError(t *testing.T) {
+	_, err := browserCommand("plan9", "https://foo.example.com")
+	if err == nil {
+		t.Fatalf("expected unsupported platform error")
+	}
+	if !strings.Contains(err.Error(), "plan9") {
+		t.Fatalf("expected platform in error, got %q", err.Error())
 	}
 }
 
