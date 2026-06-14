@@ -43,7 +43,7 @@ func (m model) View() tea.View {
 		b.WriteByte('\n')
 	}
 	if len(m.list.Items()) == 0 {
-		b.WriteString(fmt.Sprintf("No new formula PRs found in the last %s.\n", dayLabel(m.config.Days)))
+		_, _ = fmt.Fprintf(&b, "No new formula PRs found in the last %s.\n", dayLabel(m.config.Days))
 		return tea.NewView(b.String())
 	}
 
