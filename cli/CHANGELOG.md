@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.6](https://github.com/matt-riley/newbrew/compare/v0.1.5...v0.1.6) (2026-06-14)
+
+
+### Bug Fixes
+
+* Harden fetch and refresh flows ([#22](https://github.com/matt-riley/newbrew/issues/22)) ([3d4344f](https://github.com/matt-riley/newbrew/commit/3d4344fb59381ebd2524c4b7c9be3d77fb3af78b))
+
 ## [0.1.5](https://github.com/matt-riley/newbrew/compare/v0.1.4...v0.1.5) (2026-06-12)
 
 
