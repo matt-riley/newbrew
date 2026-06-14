@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.5](https://github.com/matt-riley/newbrew/compare/v0.1.4...v0.1.5) (2026-06-12)
+
+
+### Bug Fixes
+
+* bump Go to 1.26.4 to resolve govulncheck failures ([d13b0eb](https://github.com/matt-riley/newbrew/commit/d13b0ebea90f991064d0b028179c8160b444c3ea))
+
 ## [0.1.4](https://github.com/matt-riley/newbrew/compare/v0.1.3...v0.1.4) (2026-04-09)
 
 
