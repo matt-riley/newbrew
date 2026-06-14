@@ -96,7 +96,7 @@ If a cached result is being shown, the UI lets you know. If there is nothing rec
 - On Windows, homepage links are opened with `rundll32 url.dll,FileProtocolHandler`.
 - If a formula is missing a description or homepage in the source file, `newbrew` shows a fallback instead of exploding dramatically.
 - The app currently focuses on recent additions to `Homebrew/homebrew-core`, not the full historical catalog.
-- If GitHub rate limits get noisy, set `GITHUB_TOKEN` before launching or retry with `--no-cache` plus a smaller `--days` or `--limit` window while debugging.
+- If GitHub rate limits get noisy, set `GITHUB_TOKEN` before launching and retry with a smaller `--days` or `--limit` window while debugging.
 
 ## Development
 

@@ -20,6 +20,7 @@ const (
 	defaultRepoName    = "homebrew-core"
 	defaultDays        = 5
 	defaultLimit       = 50
+	maxSearchLimit     = 100
 	defaultTimeout     = 15 * time.Second
 	maxFormulaFetchers = 8
 	missingDesc        = "(not found)"
@@ -80,6 +81,8 @@ func New(config Config) *Fetcher {
 	limit := config.Limit
 	if limit <= 0 {
 		limit = defaultLimit
+	} else if limit > maxSearchLimit {
+		limit = maxSearchLimit
 	}
 
 	token := config.Token

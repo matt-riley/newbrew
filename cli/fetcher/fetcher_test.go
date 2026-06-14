@@ -82,6 +82,13 @@ func TestFetchAndCacheEncodesQueryAndParsesFormulae(t *testing.T) {
 	}
 }
 
+func TestNewClampsLimitToGitHubSearchMaximum(t *testing.T) {
+	f := New(Config{Limit: 250})
+	if f.limit != 100 {
+		t.Fatalf("expected limit to be clamped to 100, got %d", f.limit)
+	}
+}
+
 func TestFetchAndCacheReturnsErrorOnGithubFailure(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "boom", http.StatusInternalServerError)
