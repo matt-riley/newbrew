@@ -18,13 +18,19 @@ type Cache struct {
 	Formulae  []models.FormulaInfo
 }
 
-func cachePath() string {
+var cachePathFunc = defaultCachePath
+
+func defaultCachePath() string {
 	dir, err := os.UserCacheDir()
 	if err != nil {
 		dir = os.TempDir()
 	}
 	path := filepath.Join(dir, "newbrew", "formulae.json")
 	return path
+}
+
+func cachePath() string {
+	return cachePathFunc()
 }
 
 func ensureCacheDir() error {

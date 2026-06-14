@@ -2,6 +2,10 @@
 go = "1.26.4"
 golangci-lint = "latest"
 
+[tasks.build]
+description = "Build the CLI"
+run = "cd cli && go build ."
+
 [tasks.test]
 description = "Run tests"
 run = "cd cli && go test ./..."
@@ -23,4 +27,4 @@ fi
 
 [tasks.lint]
 description = "Run golangci-lint"
-run = "cd cli && golangci-lint run"
+run = "cd cli && golangci-lint run --timeout=5m"
