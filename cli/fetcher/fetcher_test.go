@@ -37,12 +37,14 @@ func newTestFetcher(client *http.Client, baseURL string) *Fetcher {
 
 func TestFetchAndCacheEncodesQueryAndParsesFormulae(t *testing.T) {
 	var gotQuery string
+	var gotUserAgent string
 	var baseURL string
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case "/search/issues":
 			gotQuery = r.URL.Query().Get("q")
+			gotUserAgent = r.Header.Get("User-Agent")
 			if got := r.URL.Query().Get("per_page"); got != "7" {
 				t.Fatalf("expected per_page 7, got %q", got)
 			}
@@ -67,6 +69,9 @@ func TestFetchAndCacheEncodesQueryAndParsesFormulae(t *testing.T) {
 	wantQuery := `repo:Homebrew/homebrew-core is:pr is:closed label:"new formula" merged:>=2026-06-09`
 	if gotQuery != wantQuery {
 		t.Fatalf("expected query %q, got %q", wantQuery, gotQuery)
+	}
+	if gotUserAgent == "" {
+		t.Fatalf("expected GitHub request to set User-Agent header")
 	}
 	if len(result.Formulae) != 1 {
 		t.Fatalf("expected one formula, got %d", len(result.Formulae))

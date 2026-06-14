@@ -25,6 +25,12 @@ const (
 	maxFormulaFetchers = 8
 	missingDesc        = "(not found)"
 	missingHomepage    = "(not found)"
+	userAgent          = "newbrew"
+)
+
+var (
+	descPattern     = regexp.MustCompile(`^\s*desc\s+["']([^"']+)["']`)
+	homepagePattern = regexp.MustCompile(`^\s*homepage\s+["']([^"']+)["']`)
 )
 
 type CacheInterface interface {
@@ -241,18 +247,15 @@ func (f *Fetcher) fetchFormulaMetadata(rawURL string) (desc, homepage string, er
 	}
 
 	scanner := bufio.NewScanner(resp.Body)
-	reDesc := regexp.MustCompile(`^\s*desc\s+["']([^"']+)["']`)
-	reHome := regexp.MustCompile(`^\s*homepage\s+["']([^"']+)["']`)
-
 	for scanner.Scan() {
 		line := scanner.Text()
 		if desc == "" {
-			if m := reDesc.FindStringSubmatch(line); m != nil {
+			if m := descPattern.FindStringSubmatch(line); m != nil {
 				desc = m[1]
 			}
 		}
 		if homepage == "" {
-			if m := reHome.FindStringSubmatch(line); m != nil {
+			if m := homepagePattern.FindStringSubmatch(line); m != nil {
 				homepage = m[1]
 			}
 		}
@@ -332,6 +335,7 @@ func (f *Fetcher) githubRequest(requestURL string) (*http.Response, error) {
 		req.Header.Set("Authorization", "Bearer "+f.token)
 	}
 	req.Header.Set("Accept", "application/vnd.github+json")
+	req.Header.Set("User-Agent", userAgent)
 
 	return f.httpClient.Do(req)
 }
