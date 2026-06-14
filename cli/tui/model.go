@@ -1,6 +1,8 @@
 package tui
 
 import (
+	"strings"
+
 	"charm.land/bubbles/v2/key"
 	"charm.land/bubbles/v2/list"
 	"charm.land/bubbles/v2/spinner"
@@ -11,19 +13,54 @@ import (
 	"github.com/matt-riley/newbrew/models"
 )
 
+const (
+	defaultDays  = 5
+	defaultLimit = 50
+)
+
+var (
+	newCache  = cache.NewCache
+	fetchData = func(f *fetcher.Fetcher, c fetcher.CacheInterface) (fetcher.Result, error) {
+		return f.FetchAndCache(c)
+	}
+)
+
+type Config struct {
+	Days     int
+	Limit    int
+	UseCache bool
+	Fetcher  *fetcher.Fetcher
+}
+
 type model struct {
+	config     Config
+	fetcher    *fetcher.Fetcher
 	list       list.Model
 	spinner    spinner.Model
 	loaded     bool
 	err        error
 	cached     bool
 	refreshing bool
+	status     string
+}
+
+type initialLoadMsg struct {
+	formulae     []models.FormulaInfo
+	err          error
+	cached       bool
+	needsRefresh bool
+	warnings     []string
 }
 
 type loadedMsg struct {
 	formulae []models.FormulaInfo
 	err      error
 	cached   bool
+	warnings []string
+}
+
+type browserOpenErrMsg struct {
+	err error
 }
 
 type formulaItem models.FormulaInfo
@@ -34,10 +71,17 @@ func (i formulaItem) Title() string {
 	}
 	return i.PRTitle
 }
+
 func (i formulaItem) Description() string { return i.Desc }
 func (i formulaItem) FilterValue() string { return i.PRTitle }
 
 func InitialModel() model {
+	return NewModel(Config{UseCache: true})
+}
+
+func NewModel(config Config) model {
+	config = normalizeConfig(config)
+
 	s := spinner.New()
 	s.Spinner = spinner.Dot
 
@@ -47,7 +91,7 @@ func InitialModel() model {
 		return []key.Binding{
 			key.NewBinding(
 				key.WithKeys("enter"),
-				key.WithHelp("⏎", "open"),
+				key.WithHelp("enter", "open"),
 			),
 			key.NewBinding(
 				key.WithKeys("r"),
@@ -59,24 +103,88 @@ func InitialModel() model {
 	l.Styles.Title = titleStyle
 	l.Styles.PaginationStyle = paginationStyle
 	l.Styles.HelpStyle = helpStyle
-	return model{spinner: s, list: l}
+
+	return model{
+		config:  config,
+		fetcher: config.Fetcher,
+		spinner: s,
+		list:    l,
+	}
+}
+
+func normalizeConfig(config Config) Config {
+	if config.Days <= 0 {
+		config.Days = defaultDays
+	}
+	if config.Limit <= 0 {
+		config.Limit = defaultLimit
+	}
+	if config.Fetcher == nil {
+		config.Fetcher = fetcher.New(fetcher.Config{
+			Days:  config.Days,
+			Limit: config.Limit,
+		})
+	}
+	return config
 }
 
 func (m model) Init() tea.Cmd {
-	return tea.Batch(func() tea.Msg {
-		// Try cache first
-		c, err := cache.NewCache()
-		if err == nil && c.IsFresh() {
-			// Show cached data immediately, then refresh in background
-			go func() {
-				formulae, err := fetcher.FetchAndCache(c)
-				tea.Println("") // force redraw
-				tea.NewProgram(model{}).Send(loadedMsg{formulae, err, false})
-			}()
-			return loadedMsg{c.Formulae, nil, true}
+	return tea.Batch(loadInitialDataCmd(m.config), m.spinner.Tick)
+}
+
+func loadInitialDataCmd(config Config) tea.Cmd {
+	config = normalizeConfig(config)
+
+	return func() tea.Msg {
+		if config.UseCache {
+			c, err := newCache()
+			if err == nil && c.IsFresh() {
+				return initialLoadMsg{
+					formulae:     c.Formulae,
+					cached:       true,
+					needsRefresh: true,
+				}
+			}
 		}
-		// No cache or stale, fetch and cache
-		formulae, err := fetcher.FetchAndCache(c)
-		return loadedMsg{formulae, err, false}
-	}, m.spinner.Tick)
+
+		return fetchCmd(config)()
+	}
+}
+
+func fetchCmd(config Config) tea.Cmd {
+	config = normalizeConfig(config)
+
+	return func() tea.Msg {
+		cacheStore, warnings := cacheForFetch(config)
+		result, err := fetchData(config.Fetcher, cacheStore)
+		if len(warnings) > 0 {
+			result.Warnings = append(warnings, result.Warnings...)
+		}
+		return loadedMsg{
+			formulae: result.Formulae,
+			err:      err,
+			cached:   false,
+			warnings: result.Warnings,
+		}
+	}
+}
+
+func cacheForFetch(config Config) (fetcher.CacheInterface, []string) {
+	if !config.UseCache {
+		return nil, nil
+	}
+
+	c, err := newCache()
+	if err != nil {
+		return nil, []string{err.Error()}
+	}
+
+	return c, nil
+}
+
+func joinWarnings(warnings []string) string {
+	if len(warnings) == 0 {
+		return ""
+	}
+	return strings.Join(warnings, " | ")
 }

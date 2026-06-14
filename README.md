@@ -53,7 +53,17 @@ If you have a GitHub token handy, you can pass it in to get nicer API rate limit
 GITHUB_TOKEN=your_token_here newbrew
 ```
 
+You can also tweak the fetch window or skip the cache when needed:
+
+```bash
+newbrew --days 7 --limit 100
+newbrew --no-cache
+newbrew --version
+```
+
 `newbrew` also keeps a short-lived cache in your user cache directory, so repeated launches are snappy and friendly to the GitHub API. Cached results stay fresh for about 10 minutes, and you can always refresh manually from inside the app.
+
+By default the cache lives in your OS cache directory under `newbrew/formulae.json`.
 
 ## Controls
 
@@ -83,8 +93,10 @@ If a cached result is being shown, the UI lets you know. If there is nothing rec
 
 - On Linux, homepage links are opened with `xdg-open`.
 - On macOS, homepage links are opened with `open`.
+- On Windows, homepage links are opened with `rundll32 url.dll,FileProtocolHandler`.
 - If a formula is missing a description or homepage in the source file, `newbrew` shows a fallback instead of exploding dramatically.
 - The app currently focuses on recent additions to `Homebrew/homebrew-core`, not the full historical catalog.
+- If GitHub rate limits get noisy, set `GITHUB_TOKEN` before launching or retry with `--no-cache` plus a smaller `--days` or `--limit` window while debugging.
 
 ## Development
 
