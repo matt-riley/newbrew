@@ -1,0 +1,45 @@
+[tools]
+go = "1.26.4"
+golangci-lint = "2.12.2"
+
+[env]
+MISE_GO_WORKING_DIR = "cli"
+
+[tasks.go-build]
+description = "Build the CLI"
+run = """
+cd "${MISE_GO_WORKING_DIR}"
+go build .
+"""
+
+[tasks.go-test]
+description = "Run Go tests"
+run = """
+cd "${MISE_GO_WORKING_DIR}"
+go test ./...
+"""
+
+[tasks.go-vet]
+description = "Run go vet"
+run = """
+cd "${MISE_GO_WORKING_DIR}"
+go vet ./...
+"""
+
+[tasks.go-fmt]
+description = "Check formatting with gofmt"
+run = """
+cd "${MISE_GO_WORKING_DIR}"
+if [ -n "$(gofmt -l .)" ]; then
+  echo "Error: Code is not formatted with gofmt"
+  gofmt -l .
+  exit 1
+fi
+"""
+
+[tasks.go-lint]
+description = "Run golangci-lint"
+run = """
+cd "${MISE_GO_WORKING_DIR}"
+golangci-lint run --timeout=5m
+"""
