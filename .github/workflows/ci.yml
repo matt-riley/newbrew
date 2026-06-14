@@ -13,10 +13,12 @@ jobs:
   ci:
     uses: matt-riley/matt-riley-ci/.github/workflows/ci.yml@v2
     with:
+      build: true
       test: true
-      lint: true
       vet: true
       fmt: true
+      lint: true
+      concurrency-suffix: ci
 
   govulncheck:
     needs: ci
@@ -25,3 +27,4 @@ jobs:
     with:
       go-version-file: cli/go.mod
       working-directory: cli
+      concurrency-suffix: security

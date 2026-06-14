@@ -13,6 +13,7 @@ var (
 	docStyle        = lipgloss.NewStyle().Margin(1, 2)
 	titleStyle      = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("205"))
 	cachedStyle     = lipgloss.NewStyle().Foreground(lipgloss.Color("240"))
+	errorStyle      = lipgloss.NewStyle().Foreground(lipgloss.Color("9"))
 	paginationStyle = list.DefaultStyles(true).PaginationStyle.PaddingLeft(4)
 	helpStyle       = list.DefaultStyles(true).HelpStyle.PaddingLeft(4).PaddingBottom(1)
 )
@@ -24,18 +25,36 @@ func (m model) View() tea.View {
 		}
 		return tea.NewView(fmt.Sprintf("%s Loading new Homebrew formulae (labelled 'new formula')...\n", m.spinner.View()))
 	}
-	if m.err != nil {
-		return tea.NewView(fmt.Sprintf("Error: %v\n", m.err))
-	}
-	if len(m.list.Items()) == 0 {
-		return tea.NewView("No new formula PRs found in the last 2 days.\n")
-	}
+
 	var b strings.Builder
 	if m.cached {
-		b.WriteString(cachedStyle.Render("Using cached data. Press 'r' to refresh.\n"))
+		if m.refreshing {
+			b.WriteString(cachedStyle.Render("Using cached data while refreshing...\n"))
+		} else {
+			b.WriteString(cachedStyle.Render("Using cached data. Press 'r' to refresh.\n"))
+		}
+	}
+	if m.status != "" {
+		b.WriteString(cachedStyle.Render(m.status))
+		b.WriteByte('\n')
+	}
+	if m.err != nil {
+		b.WriteString(errorStyle.Render(fmt.Sprintf("Error: %v", m.err)))
+		b.WriteByte('\n')
+	}
+	if len(m.list.Items()) == 0 {
+		_, _ = fmt.Fprintf(&b, "No new formula PRs found in the last %s.\n", dayLabel(m.config.Days))
+		return tea.NewView(b.String())
 	}
 
 	b.WriteString(m.list.View())
 	b.WriteString("\nPress Enter to open homepage in browser.\n")
 	return tea.NewView(b.String())
+}
+
+func dayLabel(days int) string {
+	if days == 1 {
+		return "1 day"
+	}
+	return fmt.Sprintf("%d days", days)
 }
