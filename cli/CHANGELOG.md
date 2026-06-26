@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.1.7](https://github.com/matt-riley/newbrew/compare/v0.1.6...v0.1.7) (2026-06-22)
+
+
+### Bug Fixes
+
+* **deps:** update module charm.land/bubbletea/v2 to v2.0.7 ([c3cfa32](https://github.com/matt-riley/newbrew/commit/c3cfa3273b1b50b4c0b1e191cc411a61e692829a))
+* **deps:** update module charm.land/lipgloss/v2 to v2.0.3 ([36b6530](https://github.com/matt-riley/newbrew/commit/36b6530d25a2d5a81bf540c1255656abd966b17e))
+* **deps:** update module charm.land/lipgloss/v2 to v2.0.4 ([91d9f67](https://github.com/matt-riley/newbrew/commit/91d9f675f32edc788183eda353cc409a3b1b26c0))
+
 ## [0.1.6](https://github.com/matt-riley/newbrew/compare/v0.1.5...v0.1.6) (2026-06-14)
 
 
