@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   ci:
-    uses: matt-riley/matt-riley-ci/.github/workflows/ci.yml@v2
+    uses: matt-riley/matt-riley-ci/.github/workflows/ci.yml@7fd3aefaab1ae14d063930c85b2d629280c36620 # v2
     with:
       build: true
       test: true
@@ -23,7 +23,7 @@ jobs:
   govulncheck:
     needs: ci
     if: ${{ always() }}
-    uses: matt-riley/matt-riley-ci/.github/workflows/go-security.yml@v2
+    uses: matt-riley/matt-riley-ci/.github/workflows/go-security.yml@7fd3aefaab1ae14d063930c85b2d629280c36620 # v2
     with:
       go-version-file: cli/go.mod
       working-directory: cli
