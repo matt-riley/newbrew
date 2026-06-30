@@ -87,8 +87,6 @@ func New(config Config) *Fetcher {
 	limit := config.Limit
 	if limit <= 0 {
 		limit = defaultLimit
-	} else if limit > maxSearchLimit {
-		limit = maxSearchLimit
 	}
 
 	token := config.Token

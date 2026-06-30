@@ -87,10 +87,15 @@ func TestFetchAndCacheEncodesQueryAndParsesFormulae(t *testing.T) {
 	}
 }
 
-func TestNewClampsLimitToGitHubSearchMaximum(t *testing.T) {
+func TestNewTrustsLimitWithoutClamping(t *testing.T) {
 	f := New(Config{Limit: 250})
-	if f.limit != 100 {
-		t.Fatalf("expected limit to be clamped to 100, got %d", f.limit)
+	if f.limit != 250 {
+		t.Fatalf("expected limit to pass through as 250, got %d", f.limit)
+	}
+
+	fZero := New(Config{Limit: 0})
+	if fZero.limit != defaultLimit {
+		t.Fatalf("expected zero limit to use default %d, got %d", defaultLimit, fZero.limit)
 	}
 }
 

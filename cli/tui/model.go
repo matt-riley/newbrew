@@ -26,10 +26,11 @@ var (
 )
 
 type Config struct {
-	Days     int
-	Limit    int
-	UseCache bool
-	Fetcher  *fetcher.Fetcher
+	Days          int
+	Limit         int
+	UseCache      bool
+	ClampWarnings []string
+	Fetcher       *fetcher.Fetcher
 }
 
 type model struct {
@@ -141,6 +142,7 @@ func loadInitialDataCmd(config Config) tea.Cmd {
 					formulae:     c.Formulae,
 					cached:       true,
 					needsRefresh: true,
+					warnings:     config.ClampWarnings,
 				}
 			}
 		}
@@ -155,6 +157,10 @@ func fetchCmd(config Config) tea.Cmd {
 	return func() tea.Msg {
 		cacheStore, warnings := cacheForFetch(config)
 		result, err := fetchData(config.Fetcher, cacheStore)
+		// Prepend clamp warnings (from main) before fetch warnings.
+		if len(config.ClampWarnings) > 0 {
+			result.Warnings = append(config.ClampWarnings, result.Warnings...)
+		}
 		if len(warnings) > 0 {
 			result.Warnings = append(warnings, result.Warnings...)
 		}
