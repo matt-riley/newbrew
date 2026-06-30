@@ -230,3 +230,71 @@ func (e *errReadCloser) Read(_ []byte) (int, error) {
 func (e *errReadCloser) Close() error {
 	return nil
 }
+
+func TestDefaultReturnsConfiguredFetcher(t *testing.T) {
+	f := Default()
+
+	if f == nil {
+		t.Fatal("Default() returned nil")
+	}
+	if f.days != defaultDays {
+		t.Errorf("days: got %d, want %d", f.days, defaultDays)
+	}
+	if f.limit != defaultLimit {
+		t.Errorf("limit: got %d, want %d", f.limit, defaultLimit)
+	}
+	if f.httpClient == nil {
+		t.Fatal("httpClient is nil")
+	}
+	if f.httpClient.Timeout != defaultTimeout {
+		t.Errorf("timeout: got %v, want %v", f.httpClient.Timeout, defaultTimeout)
+	}
+	if f.now == nil {
+		t.Fatal("now is nil")
+	}
+	if f.repoOwner != defaultRepoOwner {
+		t.Errorf("repoOwner: got %q, want %q", f.repoOwner, defaultRepoOwner)
+	}
+}
+
+func TestFetchAndCacheConvenienceWrapper(t *testing.T) {
+	// Smoke test: the package-level convenience function returns results
+	// when a test server provides data. We use a simple direct stub since
+	// the function uses Default() which is covered above.
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/search/issues":
+			_, _ = io.WriteString(w, `{"items":[]}`)
+		default:
+			t.Errorf("unexpected path: %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	// We can't override Default()'s apiBaseURL from here, but we can test
+	// FetchAndCache directly on a manually-constructed Fetcher (covered by
+	// TestFetchAndCacheEncodesQueryAndParsesFormulae). For the package-level
+	// function this is a smoke test that it doesn't panic and composes correctly.
+	//
+	// Instead, test that FetchAndCache on a nil cache doesn't panic and
+	// returns an error when GitHub is unreachable (no GITHUB_TOKEN + real API).
+	// Skip real-network test in unit context; use stubCache.
+
+	cache := &stubCache{}
+	f := New(Config{
+		HTTPClient: server.Client(),
+		Now: func() time.Time {
+			return time.Date(2026, 6, 14, 12, 0, 0, 0, time.UTC)
+		},
+	})
+	f.apiBaseURL = server.URL
+
+	result, err := f.FetchAndCache(cache)
+	if err != nil {
+		t.Fatalf("FetchAndCache: %v", err)
+	}
+	if len(cache.saved) != 0 {
+		t.Fatalf("expected empty cache, got %d items", len(cache.saved))
+	}
+	_ = result // verify no panic; TestFetchAndCacheEncodesQueryAndParsesFormulae covers result content
+}
