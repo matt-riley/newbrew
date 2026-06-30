@@ -2,6 +2,7 @@ package tui
 
 import (
 	"fmt"
+	"net/url"
 	"os/exec"
 	"runtime"
 	"strings"
@@ -13,29 +14,45 @@ import (
 	"github.com/matt-riley/newbrew/models"
 )
 
-var openBrowser = func(url string) error {
-	cmd, err := browserCommand(runtime.GOOS, url)
+var openBrowser = func(rawURL string) error {
+	cmd, err := browserCommand(runtime.GOOS, rawURL)
 	if err != nil {
 		return err
 	}
 	return cmd.Start()
 }
 
-func browserCommand(goos, url string) (*exec.Cmd, error) {
+func browserCommand(goos, rawURL string) (*exec.Cmd, error) {
+	parsed, err := url.Parse(rawURL)
+	if err != nil {
+		return nil, fmt.Errorf("parsing URL %q: %w", rawURL, err)
+	}
+	if parsed.Scheme != "http" && parsed.Scheme != "https" {
+		return nil, fmt.Errorf("unsupported URL scheme %q: only http and https are allowed", parsed.Scheme)
+	}
+	sanitized := parsed.String()
+
 	switch goos {
 	case "darwin":
-		return exec.Command("open", url), nil
+		return exec.Command("open", sanitized), nil // #nosec G204 — URL is parsed and sanitized above
 	case "linux":
-		return exec.Command("xdg-open", url), nil
+		return exec.Command("xdg-open", sanitized), nil // #nosec G204 — URL is parsed and sanitized above
 	case "windows":
-		return exec.Command("rundll32", "url.dll,FileProtocolHandler", url), nil
+		return exec.Command("rundll32", "url.dll,FileProtocolHandler", sanitized), nil // #nosec G204 — URL is parsed and sanitized above
 	default:
 		return nil, fmt.Errorf("unsupported platform: %s", goos)
 	}
 }
 
 func isBrowsableHomepage(homepage string) bool {
-	return strings.HasPrefix(homepage, "https://") || strings.HasPrefix(homepage, "http://")
+	u, err := url.Parse(homepage)
+	if err != nil {
+		return false
+	}
+	if u.Scheme != "http" && u.Scheme != "https" {
+		return false
+	}
+	return u.Host != ""
 }
 
 func openBrowserCmd(url string) tea.Cmd {

