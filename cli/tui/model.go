@@ -31,9 +31,9 @@ var (
 
 // Config holds the parameters for the TUI model.
 type Config struct {
-	Days     int             // look-back window in days; defaults to 5
-	Limit    int             // max PRs to inspect; defaults to 50
-	UseCache bool            // whether to use the on-disk cache
+	Days     int              // look-back window in days; defaults to 5
+	Limit    int              // max PRs to inspect; defaults to 50
+	UseCache bool             // whether to use the on-disk cache
 	Fetcher  *fetcher.Fetcher // fetcher instance; a default is created when nil
 }
 

@@ -34,9 +34,9 @@ var (
 	descPattern     = regexp.MustCompile(`^\s*desc\s+["']([^"']+)["']`)
 	homepagePattern = regexp.MustCompile(`^\s*homepage\s+["']([^"']+)["']`)
 
-	// logger is the package-level structured logger. It defaults to a
-	// discard handler so that callers who don't need debug output see no
-	// noise. Use SetLogger to enable logging.
+	// logger is the package-level structured logger. It defaults to
+	// writing warnings and errors to stderr. Use SetLogger to control
+	// the log level and output destination.
 	logger = slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelWarn}))
 )
 
@@ -59,12 +59,12 @@ type CacheInterface interface {
 // Config holds the tunable parameters for creating a Fetcher.
 // All fields are optional; zero values trigger sensible defaults.
 type Config struct {
-	HTTPClient *http.Client  // HTTP client to use; a default with Timeout=15s is created when nil
+	HTTPClient *http.Client     // HTTP client to use; a default with Timeout=15s is created when nil
 	Now        func() time.Time // clock function for time-dependent queries; time.Now when nil
-	Days       int             // look-back window in days; defaults to 5
-	Limit      int             // max PRs to inspect; defaults to 50, capped at 100
-	Token      string          // GitHub personal access token; read from GITHUB_TOKEN env when empty
-	Version    string          // application version for the User-Agent header; "dev" when empty
+	Days       int              // look-back window in days; defaults to 5
+	Limit      int              // max PRs to inspect; defaults to 50, capped at 100
+	Token      string           // GitHub personal access token; read from GITHUB_TOKEN env when empty
+	Version    string           // application version for the User-Agent header; "dev" when empty
 }
 
 // Result is the outcome of a FetchAndCache call.
