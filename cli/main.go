@@ -21,6 +21,11 @@ var (
 	date    = "unknown"
 )
 
+const (
+	maxLimit = 100
+	maxDays  = 365
+)
+
 func main() {
 	days := flag.Int("days", 5, "look back this many days for merged Homebrew formulae")
 	limit := flag.Int("limit", 50, "maximum number of pull requests to inspect")
@@ -36,6 +41,26 @@ func main() {
 		return
 	}
 
+	// Validate flags before constructing the fetcher.
+	if *days <= 0 {
+		fmt.Fprintf(os.Stderr, "newbrew: --days must be a positive integer (got %d)\n", *days)
+		os.Exit(2)
+	}
+	if *limit <= 0 {
+		fmt.Fprintf(os.Stderr, "newbrew: --limit must be a positive integer (got %d)\n", *limit)
+		os.Exit(2)
+	}
+
+	// Cap out-of-range values with a visible warning to stderr.
+	if *limit > maxLimit {
+		fmt.Fprintf(os.Stderr, "newbrew: --limit %d exceeds maximum, capping to %d\n", *limit, maxLimit)
+		*limit = maxLimit
+	}
+	if *days > maxDays {
+		fmt.Fprintf(os.Stderr, "newbrew: --days %d exceeds maximum, capping to %d\n", *days, maxDays)
+		*days = maxDays
+	}
+
 	model := tui.NewModel(tui.Config{
 		Days:     *days,
 		Limit:    *limit,
@@ -48,7 +73,7 @@ func main() {
 	})
 
 	if _, err := tea.NewProgram(model).Run(); err != nil {
-		fmt.Println("Error:", err)
+		fmt.Fprintf(os.Stderr, "newbrew: %v\n", err)
 		os.Exit(1)
 	}
 }
