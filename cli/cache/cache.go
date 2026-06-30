@@ -35,7 +35,7 @@ func cachePath() string {
 
 func ensureCacheDir() error {
 	dir := filepath.Dir(cachePath())
-	return os.MkdirAll(dir, 0o755)
+	return os.MkdirAll(dir, 0o700)
 }
 
 func NewCache() (*Cache, error) {
@@ -52,6 +52,7 @@ func NewCache() (*Cache, error) {
 
 func (c *Cache) Load() error {
 	path := cachePath()
+	// #nosec G304 — cache path is deterministic (UserCacheDir/TempDir + "newbrew/formulae.json")
 	f, err := os.Open(path)
 	if err != nil {
 		return err
@@ -72,6 +73,7 @@ func (c *Cache) Save(formulae []models.FormulaInfo) error {
 		return err
 	}
 	path := cachePath()
+	// #nosec G304 — cache path is deterministic (UserCacheDir/TempDir + "newbrew/formulae.json")
 	f, err := os.Create(path)
 	if err != nil {
 		return err
