@@ -8,7 +8,7 @@ run = "cd cli && go build ."
 
 [tasks.test]
 description = "Run tests"
-run = "cd cli && go test ./..."
+run = "cd cli && go test -race ./..."
 
 [tasks.vet]
 description = "Run go vet"
