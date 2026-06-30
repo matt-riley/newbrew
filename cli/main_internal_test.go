@@ -2,27 +2,25 @@ package main
 
 import (
 	"bytes"
-	"os"
 	"os/exec"
 	"path/filepath"
 	"testing"
 )
 
-// buildBinary builds the newbrew binary to a temp dir and returns its path.
-func buildBinary(t *testing.T) (string, string) {
+// buildBinary builds the newbrew binary and returns its path.
+// The temp directory is managed by t.TempDir() — no manual cleanup needed.
+func buildBinary(t *testing.T) string {
 	t.Helper()
-	tmpDir := t.TempDir()
-	binaryPath := filepath.Join(tmpDir, "newbrew")
+	binaryPath := filepath.Join(t.TempDir(), "newbrew")
 	cmd := exec.Command("go", "build", "-o", binaryPath, ".")
 	if out, err := cmd.CombinedOutput(); err != nil {
 		t.Fatalf("failed to build binary: %v\n%s", err, out)
 	}
-	return binaryPath, tmpDir
+	return binaryPath
 }
 
 func TestNegativeDaysExitsTwoWithErrorOnStderr(t *testing.T) {
-	binaryPath, tmpDir := buildBinary(t)
-	defer os.RemoveAll(tmpDir)
+	binaryPath := buildBinary(t)
 
 	cmd := exec.Command(binaryPath, "--days", "-1")
 	var stdout, stderr bytes.Buffer
@@ -43,8 +41,7 @@ func TestNegativeDaysExitsTwoWithErrorOnStderr(t *testing.T) {
 }
 
 func TestNegativeLimitExitsTwoWithErrorOnStderr(t *testing.T) {
-	binaryPath, tmpDir := buildBinary(t)
-	defer os.RemoveAll(tmpDir)
+	binaryPath := buildBinary(t)
 
 	cmd := exec.Command(binaryPath, "--limit", "0")
 	var stdout, stderr bytes.Buffer
@@ -65,21 +62,13 @@ func TestNegativeLimitExitsTwoWithErrorOnStderr(t *testing.T) {
 }
 
 func TestLimitCappedWithWarning(t *testing.T) {
-	binaryPath, tmpDir := buildBinary(t)
-	defer os.RemoveAll(tmpDir)
+	binaryPath := buildBinary(t)
 
-	// --limit 999 should run but show a warning on stderr
-	// We can't run the full TUI, but the warning is printed before the TUI starts
-	// Use --version to exit early — but that returns before validation
-	// Instead, test that the warning appears by checking stderr with a large limit
-	// and a very short --days that will make the TUI exit quickly
 	cmd := exec.Command(binaryPath, "--limit", "999", "--days", "1")
 	var stderr bytes.Buffer
 	cmd.Stderr = &stderr
 
-	// Run with a timeout — the TUI will start but we just want the warning
-	// The warning is printed before the TUI starts
-	_ = cmd.Run() // Will timeout or fail, but stderr should have the warning
+	_ = cmd.Run()
 
 	if stderr.String() == "" {
 		t.Log("Note: stderr was empty, possibly because the TUI started and blocked")
