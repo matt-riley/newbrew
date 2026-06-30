@@ -15,7 +15,7 @@ func withTestCachePath(t *testing.T) string {
 	tempDir := t.TempDir()
 	original := cachePathFunc
 	cachePathFunc = func() string {
-		return filepath.Join(tempDir, "formulae.json")
+		return filepath.Join(tempDir, "newbrew", "formulae.json")
 	}
 	t.Cleanup(func() {
 		cachePathFunc = original
@@ -58,6 +58,19 @@ func TestCacheSaveAndLoadRoundTrip(t *testing.T) {
 		t.Fatalf("expected cache file to be non-empty")
 	}
 
+	// Verify cache directory (the immediate parent of the file) is created
+	// with restrictive permissions. In production this is UserCacheDir/newbrew/;
+	// in the test we place the cache file one level deeper so MkdirAll creates
+	// a fresh directory.
+	cacheDir := filepath.Dir(path)
+	dirInfo, err := os.Stat(cacheDir)
+	if err != nil {
+		t.Fatalf("expected cache directory to exist: %v", err)
+	}
+	if perm := dirInfo.Mode().Perm(); perm != 0o700 {
+		t.Errorf("expected cache directory permissions 0o700, got %04o", perm)
+	}
+
 	loaded, err := NewCache()
 	if err != nil {
 		t.Fatalf("NewCache returned error: %v", err)
@@ -76,6 +89,9 @@ func TestCacheSaveAndLoadRoundTrip(t *testing.T) {
 func TestLoadReturnsErrorForCorruptJSON(t *testing.T) {
 	path := withTestCachePath(t)
 
+	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
+		t.Fatalf("MkdirAll returned error: %v", err)
+	}
 	if err := os.WriteFile(path, []byte("{not-json"), 0o644); err != nil {
 		t.Fatalf("WriteFile returned error: %v", err)
 	}

@@ -383,9 +383,9 @@ func TestIsBrowsableHomepageRejectsMaliciousURLs(t *testing.T) {
 		{"ssh scheme", "ssh://attacker.example.com", false},
 		{"empty string", "", false},
 		{"no scheme", "example.com", false},
-		{"scheme with different case", "HTTPS://example.com", false},
+		{"scheme with different case", "HTTPS://example.com", true}, // url.Parse normalises scheme to lowercase per RFC 3986
 		{"scheme prefix injection", "https://evil.example.com.evil.example.com", true},
-		{"just https prefix", "https://", true},
+		{"just https prefix", "https://", false}, // url.Parse yields empty Host — nothing to browse
 	}
 
 	for _, tt := range tests {
