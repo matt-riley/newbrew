@@ -21,13 +21,13 @@ func TestMain(m *testing.M) {
 
 	cmd := exec.Command("go", "build", "-o", binaryPath, ".")
 	if out, err := cmd.CombinedOutput(); err != nil {
-		os.Stderr.Write(out)
-		os.RemoveAll(tmpDir)
+		_, _ = os.Stderr.Write(out)
+		_ = os.RemoveAll(tmpDir)
 		os.Exit(1)
 	}
 
 	code := m.Run()
-	os.RemoveAll(tmpDir)
+	_ = os.RemoveAll(tmpDir)
 	os.Exit(code)
 }
 
