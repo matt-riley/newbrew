@@ -367,3 +367,54 @@ func TestIsBrowsableHomepageRejectsMalformedURLs(t *testing.T) {
 }
 
 var realOpenBrowser = openBrowser
+
+func TestIsBrowsableHomepageRejectsMaliciousURLs(t *testing.T) {
+	tests := []struct {
+		name     string
+		homepage string
+		want     bool
+	}{
+		{"valid https", "https://example.com", true},
+		{"valid http", "http://example.com", true},
+		{"javascript scheme", "javascript:alert(1)", false},
+		{"file scheme", "file:///etc/passwd", false},
+		{"data scheme", "data:text/html,<script>alert(1)</script>", false},
+		{"ftp scheme", "ftp://evil.example.com", false},
+		{"ssh scheme", "ssh://attacker.example.com", false},
+		{"empty string", "", false},
+		{"no scheme", "example.com", false},
+		{"scheme with different case", "HTTPS://example.com", false},
+		{"scheme prefix injection", "https://evil.example.com.evil.example.com", true},
+		{"just https prefix", "https://", true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := isBrowsableHomepage(tt.homepage)
+			if got != tt.want {
+				t.Errorf("isBrowsableHomepage(%q) = %v, want %v", tt.homepage, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestBrowserCommandRejectsMaliciousURLs(t *testing.T) {
+	malicious := []string{
+		"javascript:alert(1)",
+		"file:///etc/passwd",
+		"data:text/html,<script>alert(1)</script>",
+		"",
+	}
+
+	for _, url := range malicious {
+		t.Run(url, func(t *testing.T) {
+			// These should never reach browserCommand because isBrowsableHomepage
+			// filters them first. But if they do reach browserCommand on a real platform,
+			// they should be handled by the OS browser which will reject non-URL schemes.
+			// The key test is that isBrowsableHomepage returns false for these.
+			if isBrowsableHomepage(url) {
+				t.Errorf("isBrowsableHomepage(%q) should be false — this URL could be used for command injection", url)
+			}
+		})
+	}
+}
