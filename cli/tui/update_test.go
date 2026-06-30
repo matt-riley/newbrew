@@ -652,23 +652,3 @@ func TestIsBrowsableHomepageRejectsMaliciousURLs(t *testing.T) {
 	}
 }
 
-func TestBrowserCommandRejectsMaliciousURLs(t *testing.T) {
-	malicious := []string{
-		"javascript:alert(1)",
-		"file:///etc/passwd",
-		"data:text/html,<script>alert(1)</script>",
-		"",
-	}
-
-	for _, url := range malicious {
-		t.Run(url, func(t *testing.T) {
-			// These should never reach browserCommand because isBrowsableHomepage
-			// filters them first. But if they do reach browserCommand on a real platform,
-			// they should be handled by the OS browser which will reject non-URL schemes.
-			// The key test is that isBrowsableHomepage returns false for these.
-			if isBrowsableHomepage(url) {
-				t.Errorf("isBrowsableHomepage(%q) should be false — this URL could be used for command injection", url)
-			}
-		})
-	}
-}
