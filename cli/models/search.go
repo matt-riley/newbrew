@@ -2,6 +2,9 @@ package models
 
 import "time"
 
+// SearchResult represents the response from a GitHub search/issues API query.
+// Only the fields consumed by newbrew are decoded; the full response may contain
+// additional metadata.
 type SearchResult struct {
 	Items []struct {
 		Number   int       `json:"number"`

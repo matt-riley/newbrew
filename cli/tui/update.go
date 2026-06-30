@@ -47,6 +47,9 @@ func openBrowserCmd(url string) tea.Cmd {
 	}
 }
 
+// Update handles incoming Bubble Tea messages (key presses, data loads,
+// window resizes, spinner ticks) and returns the new model state plus any
+// commands to execute.
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 

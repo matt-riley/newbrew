@@ -1,3 +1,7 @@
+// Package tui implements the interactive terminal UI for browsing new
+// Homebrew formulae using the Bubble Tea framework. It displays a scrollable
+// list of recently-merged formula pull requests with metadata and supports
+// opening formula homepages in the system browser.
 package tui
 
 import (
@@ -25,11 +29,12 @@ var (
 	}
 )
 
+// Config holds the parameters for the TUI model.
 type Config struct {
-	Days     int
-	Limit    int
-	UseCache bool
-	Fetcher  *fetcher.Fetcher
+	Days     int             // look-back window in days; defaults to 5
+	Limit    int             // max PRs to inspect; defaults to 50
+	UseCache bool            // whether to use the on-disk cache
+	Fetcher  *fetcher.Fetcher // fetcher instance; a default is created when nil
 }
 
 type model struct {
@@ -62,6 +67,8 @@ type browserOpenErrMsg struct {
 	err error
 }
 
+// formulaItem adapts models.FormulaInfo to the list.Item interface so it
+// can be displayed in the bubble list.
 type formulaItem models.FormulaInfo
 
 func (i formulaItem) Title() string {
@@ -74,10 +81,14 @@ func (i formulaItem) Title() string {
 func (i formulaItem) Description() string { return i.Desc }
 func (i formulaItem) FilterValue() string { return i.PRTitle }
 
+// InitialModel returns a new model with UseCache enabled and all other
+// fields set to their defaults.
 func InitialModel() model {
 	return NewModel(Config{UseCache: true})
 }
 
+// NewModel creates a new TUI model with the given configuration.
+// Zero-value fields are replaced with sensible defaults.
 func NewModel(config Config) model {
 	config = normalizeConfig(config)
 
@@ -126,6 +137,8 @@ func normalizeConfig(config Config) Config {
 	return config
 }
 
+// Init is the Bubble Tea Init method. It kicks off the initial data load
+// and the spinner animation.
 func (m model) Init() tea.Cmd {
 	return tea.Batch(loadInitialDataCmd(m.config), m.spinner.Tick)
 }

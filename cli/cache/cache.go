@@ -1,3 +1,6 @@
+// Package cache provides a file-based JSON cache for Homebrew formula data,
+// stored under the user's cache directory (~/.cache/newbrew/formulae.json).
+// The cache is considered fresh for 10 minutes.
 package cache
 
 import (
@@ -13,9 +16,12 @@ import (
 
 const cacheExpiry = 10 * time.Minute
 
+// Cache holds the timestamped formula data persisted to disk.
+// Use NewCache to load (or initialise) a cache instance, then
+// Save to persist and IsFresh to check staleness.
 type Cache struct {
-	Timestamp time.Time
-	Formulae  []models.FormulaInfo
+	Timestamp time.Time            // when the cache was last saved
+	Formulae  []models.FormulaInfo // cached formula metadata
 }
 
 var cachePathFunc = defaultCachePath
@@ -38,6 +44,9 @@ func ensureCacheDir() error {
 	return os.MkdirAll(dir, 0o755)
 }
 
+// NewCache loads the on-disk cache (if it exists) and returns a *Cache
+// ready for use. A missing cache file is not an error — the returned
+// Cache will have zero Timestamp and empty Formulae.
 func NewCache() (*Cache, error) {
 	c := &Cache{}
 	err := c.Load()
@@ -50,6 +59,8 @@ func NewCache() (*Cache, error) {
 	return c, nil
 }
 
+// Load reads the JSON cache from disk into c. An io.EOF on an empty file
+// is treated as a successful (no-op) load.
 func (c *Cache) Load() error {
 	path := cachePath()
 	f, err := os.Open(path)
@@ -64,6 +75,8 @@ func (c *Cache) Load() error {
 	return err
 }
 
+// Save persists the given formulae to the cache file with the current
+// timestamp. It creates the cache directory if needed.
 func (c *Cache) Save(formulae []models.FormulaInfo) error {
 	if c == nil {
 		return errors.New("cache is nil")
@@ -86,6 +99,8 @@ func (c *Cache) Save(formulae []models.FormulaInfo) error {
 	return nil
 }
 
+// IsFresh reports whether the cache is still within the expiry window
+// (cacheExpiry, currently 10 minutes) relative to its last save time.
 func (c *Cache) IsFresh() bool {
 	return time.Since(c.Timestamp) < cacheExpiry
 }
