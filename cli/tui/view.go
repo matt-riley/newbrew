@@ -18,6 +18,9 @@ var (
 	helpStyle       = list.DefaultStyles(true).HelpStyle.PaddingLeft(4).PaddingBottom(1)
 )
 
+// View renders the TUI as a string. It shows a loading spinner before data
+// arrives, a cached/refreshing indicator when applicable, and the formula
+// list + keybindings once loaded.
 func (m model) View() tea.View {
 	if !m.loaded {
 		if m.refreshing {
