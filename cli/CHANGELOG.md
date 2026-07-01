@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.2.0](https://github.com/matt-riley/newbrew/compare/v0.1.7...v0.2.0) (2026-07-01)
+
+
+### Features
+
+* add Go doc comments, structured logging, and build metadata injection ([#33](https://github.com/matt-riley/newbrew/issues/33)) ([8ec708d](https://github.com/matt-riley/newbrew/commit/8ec708db60205cf8acd1867dd615ea5b5a16ffb0))
+
+
+### Bug Fixes
+
+* eliminate command injection in browser URL handling and harden cache permissions ([#38](https://github.com/matt-riley/newbrew/issues/38)) ([97b8d3e](https://github.com/matt-riley/newbrew/commit/97b8d3e439c4e901c617929783a4faeb7f5c5fdf))
+* route fatal errors to stderr and validate CLI flags ([#35](https://github.com/matt-riley/newbrew/issues/35)) ([c761b13](https://github.com/matt-riley/newbrew/commit/c761b133d8052f05337bd65d853b90765b291f93))
+
 ## [0.1.7](https://github.com/matt-riley/newbrew/compare/v0.1.6...v0.1.7) (2026-06-22)
 
 
