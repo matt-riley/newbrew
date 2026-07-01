@@ -651,4 +651,3 @@ func TestIsBrowsableHomepageRejectsMaliciousURLs(t *testing.T) {
 		})
 	}
 }
-
