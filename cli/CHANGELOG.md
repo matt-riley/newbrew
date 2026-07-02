@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.0](https://github.com/matt-riley/newbrew/compare/v0.3.0...v0.4.0) (2026-07-02)
+
+
+### Features
+
+* migrate from stdlib flag to pflag with short flags and rich help ([#47](https://github.com/matt-riley/newbrew/issues/47)) ([01a70d9](https://github.com/matt-riley/newbrew/commit/01a70d9aab996c9d37c28ac7d80a3c346fb879c2))
+
 ## [0.3.0](https://github.com/matt-riley/newbrew/compare/v0.2.0...v0.3.0) (2026-07-02)
 
 
