@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.0](https://github.com/matt-riley/newbrew/compare/v0.2.0...v0.3.0) (2026-07-02)
+
+
+### Features
+
+* add --plain and --json output modes with non-TTY detection ([#43](https://github.com/matt-riley/newbrew/issues/43)) ([74ae81e](https://github.com/matt-riley/newbrew/commit/74ae81e770af0f0e59cd95d23bc0784f242512b9)), closes [#42](https://github.com/matt-riley/newbrew/issues/42)
+
 ## [0.2.0](https://github.com/matt-riley/newbrew/compare/v0.1.7...v0.2.0) (2026-07-01)
 
 
