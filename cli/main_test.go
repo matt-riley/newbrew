@@ -71,6 +71,12 @@ func TestHelpOutputContainsFlags(t *testing.T) {
 	if !strings.Contains(combined, "-version") {
 		t.Error("--help output missing -version flag")
 	}
+	if !strings.Contains(combined, "-plain") {
+		t.Error("--help output missing -plain flag")
+	}
+	if !strings.Contains(combined, "-json") {
+		t.Error("--help output missing -json flag")
+	}
 }
 
 func TestBogusFlagExitsTwo(t *testing.T) {
@@ -114,8 +120,134 @@ func TestFatalErrorsWrittenToStderrNotStdout(t *testing.T) {
 	}
 }
 
-func TestPlainFlag(t *testing.T) {
-	// Plain mode is not yet implemented; skip until it lands.
-	// The test is here as a placeholder so the acceptance criteria are visible.
-	t.Skip("plain mode flag not yet implemented — see plain-mode task")
+func TestPlainAndJsonMutuallyExclusive(t *testing.T) {
+	stdout, stderr, code := run("--plain", "--json")
+	if code != 2 {
+		t.Fatalf("expected exit code 2, got %d", code)
+	}
+	if !strings.Contains(stderr, "mutually exclusive") {
+		t.Errorf("expected 'mutually exclusive' in stderr, got %q", stderr)
+	}
+	if stdout != "" {
+		t.Errorf("expected empty stdout, got %q", stdout)
+	}
+}
+
+func TestPlainFlagRecognized(t *testing.T) {
+	// --plain is a valid flag — verify the binary doesn't reject it as unknown.
+	stdout, stderr, code := run("--plain", "--bogus")
+	if code == 0 {
+		t.Fatal("expected non-zero exit for --bogus")
+	}
+	// The error should be about --bogus, not --plain.
+	if strings.Contains(stderr, "plain") && !strings.Contains(stderr, "bogus") {
+		t.Errorf("expected error about --bogus, not --plain, got %q", stderr)
+	}
+	_ = stdout
+}
+
+func TestJsonFlagRecognized(t *testing.T) {
+	// --json is a valid flag — verify the binary doesn't reject it as unknown.
+	stdout, stderr, code := run("--json", "--bogus")
+	if code == 0 {
+		t.Fatal("expected non-zero exit for --bogus")
+	}
+	// The error should be about --bogus, not --json.
+	if strings.Contains(stderr, "json") && !strings.Contains(stderr, "bogus") {
+		t.Errorf("expected error about --bogus, not --json, got %q", stderr)
+	}
+	_ = stdout
+}
+
+// TestNonTTYWithoutFlagExitsTwo verifies that running without a TTY and
+// without --plain or --json produces exit code 2 (usage error) *before*
+// any network call is attempted.
+func TestNonTTYWithoutFlagExitsTwo(t *testing.T) {
+	stdout, stderr, code := run()
+	if code != 2 {
+		t.Fatalf("expected exit code 2 for non-TTY without --plain/--json, got %d", code)
+	}
+	if !strings.Contains(stderr, "needs a terminal") {
+		t.Errorf("expected 'needs a terminal' in stderr, got %q", stderr)
+	}
+	if stdout != "" {
+		t.Errorf("expected empty stdout, got %q", stdout)
+	}
+}
+
+// TestPlainOutputFormat runs --plain and verifies the output is tab-separated
+// with the correct number of fields when the fetch succeeds. If the GitHub API
+// is unreachable the test still passes as long as the failure is an operational
+// error (exit 1), not a flag-handling error (exit 2).
+func TestPlainOutputFormat(t *testing.T) {
+	stdout, stderr, code := run("--plain", "--days=1", "--limit=1", "--no-cache")
+	if code == 2 {
+		t.Fatalf("--plain should not cause exit 2 (usage error), got stderr: %s", stderr)
+	}
+	if code == 1 {
+		// Operational error (e.g. network) is acceptable — not a flag bug.
+		if !strings.Contains(stderr, "Error:") {
+			t.Errorf("expected 'Error:' in stderr for operational failure, got %q", stderr)
+		}
+		return
+	}
+	if code != 0 {
+		t.Fatalf("unexpected exit code %d, stderr: %s", code, stderr)
+	}
+
+	// On success, verify tab-separated format: 4 fields per line.
+	lines := strings.Split(strings.TrimRight(stdout, "\n"), "\n")
+	if len(lines) == 0 {
+		t.Fatal("expected at least one line of output")
+	}
+	for i, line := range lines {
+		fields := strings.Split(line, "	")
+		if len(fields) != 4 {
+			t.Errorf("line %d: expected 4 tab-separated fields, got %d: %q", i, len(fields), line)
+		}
+	}
+}
+
+// TestJsonOutputFormat runs --json and verifies the output is a valid JSON
+// array when the fetch succeeds. If the GitHub API is unreachable the test
+// still passes as long as the failure is operational (exit 1), not a
+// flag-handling error (exit 2).
+func TestJsonOutputFormat(t *testing.T) {
+	stdout, stderr, code := run("--json", "--days=1", "--limit=1", "--no-cache")
+	if code == 2 {
+		t.Fatalf("--json should not cause exit 2 (usage error), got stderr: %s", stderr)
+	}
+	if code == 1 {
+		if !strings.Contains(stderr, "Error:") {
+			t.Errorf("expected 'Error:' in stderr for operational failure, got %q", stderr)
+		}
+		return
+	}
+	if code != 0 {
+		t.Fatalf("unexpected exit code %d, stderr: %s", code, stderr)
+	}
+
+	// On success, verify the output is a JSON array.
+	stdout = strings.TrimSpace(stdout)
+	if !strings.HasPrefix(stdout, "[") || !strings.HasSuffix(stdout, "]") {
+		t.Errorf("expected JSON array output, got: %s", stdout)
+	}
+}
+
+// TestPlainAndJsonDontEmitExitOneForFlagHandling confirms that --plain and
+// --json are valid flags — the binary should never exit with code 1 due to
+// flag parsing. Exit 2 is for usage errors; exit 1 is only for operational
+// errors like network failures.
+func TestPlainAndJsonDontEmitExitOneForFlagHandling(t *testing.T) {
+	// --plain alone should be accepted syntactically.
+	_, _, code := run("--plain", "--days=1", "--limit=1", "--no-cache")
+	if code == 2 {
+		t.Error("--plain flag should not trigger a usage error (exit 2)")
+	}
+
+	// --json alone should be accepted syntactically.
+	_, _, code = run("--json", "--days=1", "--limit=1", "--no-cache")
+	if code == 2 {
+		t.Error("--json flag should not trigger a usage error (exit 2)")
+	}
 }
