@@ -61,6 +61,18 @@ newbrew --no-cache
 newbrew --version
 ```
 
+For scriptable output without a terminal, use `--plain` or `--json`:
+
+```bash
+# Tab-separated fields: title, description, homepage, date
+newbrew --plain
+
+# Structured JSON array
+newbrew --json | jq '.[] | {name: .desc, url: .homepage}'
+```
+
+When running without a TTY (e.g. in a pipeline or CI), `--plain` or `--json` is required — the TUI won't start without a terminal.
+
 `newbrew` also keeps a short-lived cache in your user cache directory, so repeated launches are snappy and friendly to the GitHub API. Cached results stay fresh for about 10 minutes, and you can always refresh manually from inside the app.
 
 By default the cache lives in your OS cache directory under `newbrew/formulae.json`.
