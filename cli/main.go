@@ -50,6 +50,8 @@ Flags:
   -d, --days N       look back this many days for merged Homebrew formulae (default: 5)
   -l, --limit N      maximum number of pull requests to inspect (default: 50)
   -n, --no-cache     disable cache reads and writes
+      --plain         output plain text (one formula per line, tab-separated fields)
+      --json          output JSON array of formula objects
   -v, --version      print version and exit
   -V                  same as --version
   -h, --help         show this help message and exit
