@@ -2,7 +2,6 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"os"
 	"runtime"
@@ -16,6 +15,8 @@ import (
 	"github.com/matt-riley/newbrew/fetcher"
 	"github.com/matt-riley/newbrew/output"
 	"github.com/matt-riley/newbrew/tui"
+
+	flag "github.com/spf13/pflag"
 )
 
 // Build-time variables injected via -ldflags.
@@ -41,15 +42,22 @@ const (
 )
 
 func main() {
-	days := flag.Int("days", 5, "look back this many days for merged Homebrew formulae")
-	limit := flag.Int("limit", 50, "maximum number of pull requests to inspect")
-	noCache := flag.Bool("no-cache", false, "disable cache reads and writes")
-	showVersion := flag.Bool("version", false, "print version information and exit")
+	days := flag.IntP("days", "d", 5, "look back this many days for merged Homebrew formulae")
+	limit := flag.IntP("limit", "l", 50, "maximum number of pull requests to inspect")
+	noCache := flag.BoolP("no-cache", "n", false, "disable cache reads and writes")
 	plain := flag.Bool("plain", false, "output plain text (one formula per line, tab-separated fields)")
 	jsonOut := flag.Bool("json", false, "output JSON array of formula objects")
+
+	var showVersionFlag bool
+	flag.BoolVarP(&showVersionFlag, "version", "v", false, "print version information and exit")
+	// pflag allows only one shorthand per flag, so we register -V as a hidden
+	// alias that writes the same variable.
+	flag.BoolVarP(&showVersionFlag, "version-V", "V", false, "print version information and exit")
+	_ = flag.CommandLine.MarkHidden("version-V")
+
 	flag.Parse()
 
-	if *showVersion {
+	if showVersionFlag {
 		fmt.Printf("newbrew %s\n", version)
 		fmt.Printf("  commit:  %s\n", commit)
 		fmt.Printf("  date:    %s\n", date)
