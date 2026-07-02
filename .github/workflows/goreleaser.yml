@@ -1,0 +1,19 @@
+name: GoReleaser
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  goreleaser:
+    uses: matt-riley/matt-riley-ci/.github/workflows/go-goreleaser.yml@071c2c2bbe410f73126d3cefd0a0b6812b3565f6 # v2
+    with:
+      go-version-file: cli/go.mod
+      working-directory: cli
+    secrets:
+      github-token: ${{ secrets.RELEASE_PLEASE_TOKEN || secrets.GITHUB_TOKEN }}
+      homebrew-tap-token: ${{ secrets.HOMEBREW_TAP_GITHUB_TOKEN || secrets.RELEASE_PLEASE_TOKEN }}
