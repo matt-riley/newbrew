@@ -25,14 +25,3 @@ jobs:
       component-output-key: cli
     secrets:
       token: ${{ secrets.RELEASE_PLEASE_TOKEN || secrets.GITHUB_TOKEN }}
-
-  goreleaser:
-    needs: release-please
-    if: ${{ needs.release-please.outputs.component_release_created == 'true' }}
-    uses: matt-riley/matt-riley-ci/.github/workflows/go-goreleaser.yml@0d1d8e7a149a53fcaaca6e128f62e0e3d8fdf293 # v2
-    with:
-      go-version-file: cli/go.mod
-      working-directory: cli
-    secrets:
-      github-token: ${{ secrets.RELEASE_PLEASE_TOKEN || secrets.GITHUB_TOKEN }}
-      homebrew-tap-token: ${{ secrets.HOMEBREW_TAP_GITHUB_TOKEN || secrets.RELEASE_PLEASE_TOKEN }}
