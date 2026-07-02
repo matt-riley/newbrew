@@ -70,7 +70,74 @@ Examples:
 `)
 }
 
+// usageError prints the usage message followed by the error and exits with
+// exitUsage (2), matching pflag's own error-handling model for parse errors.
+func usageError(msg string) {
+	flag.Usage()
+	fmt.Fprintf(os.Stderr, "newbrew: %s\n", msg)
+	os.Exit(exitUsage)
+}
+
+// longFlagNames maps long flag names to their single-character shorthands.
+// If a user writes a long name with a single dash (e.g. -version instead of
+// --version or -v), pflag would parse it as a shorthand group: -version
+// becomes -v -e -r -s -i -o -n.  If every letter happened to be a registered
+// shorthand, the token would be silently accepted as a bizarre flag
+// combination.  We reject these explicitly before parsing so the error
+// message is clear and the behaviour does not depend on which shorthands are
+// registered.
+var longFlagNames = map[string]string{
+	"version":  "v",
+	"days":     "d",
+	"limit":    "l",
+	"no-cache": "n",
+	"plain":    "",
+	"json":     "",
+	"help":     "h",
+}
+
+// rejectSingleDashLongFlags scans os.Args for long flag names written with a
+// single leading dash and exits with a usage error if any are found.  This
+// runs before flag.Parse so pflag never gets a chance to misinterpret them.
+func rejectSingleDashLongFlags() {
+	for _, arg := range os.Args[1:] {
+		// Skip -- (double dash) and non-flag args.
+		if strings.HasPrefix(arg, "--") || !strings.HasPrefix(arg, "-") {
+			continue
+		}
+		// arg is a single-dash token like -version or -d.  Extract the flag
+		// name (strip leading dash and any =value suffix).
+		name := strings.TrimPrefix(arg, "-")
+		if i := strings.IndexByte(name, '='); i >= 0 {
+			name = name[:i]
+		}
+		// Skip genuine single-character shorthands.
+		if len(name) <= 1 {
+			continue
+		}
+		if short, ok := longFlagNames[name]; ok {
+			flag.Usage()
+			suggestion := "--" + name
+			if short != "" {
+				suggestion = "-" + short + " or --" + name
+			}
+			fmt.Fprintf(os.Stderr, "newbrew: unknown flag: -%s (use %s)\n", name, suggestion)
+			os.Exit(exitUsage)
+		}
+	}
+}
+
 func main() {
+	// Set the usage function early so pre-parse error paths (e.g. single-dash
+	// long flag rejection) also print the help text.  If an init() in
+	// usage.go has already overridden flag.Usage, that takes priority.
+	flag.Usage = customUsage
+
+	// Reject single-dash long flag names (e.g. -version) before pflag parses,
+	// so they fail with a clear error instead of being misinterpreted as
+	// shorthand groups.
+	rejectSingleDashLongFlags()
+
 	var showVersionFlag bool
 
 	days := flag.IntP("days", "d", 5, "look back this many days for merged Homebrew formulae")
@@ -85,7 +152,6 @@ func main() {
 	// itself is invisible in --help so we document -V inside customUsage.
 	flag.BoolVarP(&showVersionFlag, "version-V", "V", false, "print version information and exit")
 
-	flag.Usage = customUsage
 	flag.Parse()
 
 	if showVersionFlag {
@@ -98,18 +164,15 @@ func main() {
 
 	// Mutually exclusive output modes.
 	if *plain && *jsonOut {
-		fmt.Fprintln(os.Stderr, "newbrew: --plain and --json are mutually exclusive")
-		os.Exit(exitUsage)
+		usageError("--plain and --json are mutually exclusive")
 	}
 
 	// Validate flags before constructing the fetcher.
 	if *days <= 0 {
-		fmt.Fprintf(os.Stderr, "newbrew: --days must be a positive integer (got %d)\n", *days)
-		os.Exit(exitUsage)
+		usageError(fmt.Sprintf("--days must be a positive integer (got %d)", *days))
 	}
 	if *limit <= 0 {
-		fmt.Fprintf(os.Stderr, "newbrew: --limit must be a positive integer (got %d)\n", *limit)
-		os.Exit(exitUsage)
+		usageError(fmt.Sprintf("--limit must be a positive integer (got %d)", *limit))
 	}
 
 	// Cap out-of-range values with a visible warning to stderr.
@@ -125,8 +188,7 @@ func main() {
 	// Non-TTY detection: require --plain or --json when stdout is not a terminal.
 	isTTY := term.IsTerminal(int(os.Stdout.Fd()))
 	if !isTTY && !*plain && !*jsonOut {
-		fmt.Fprintln(os.Stderr, "newbrew needs a terminal. Use --plain for scriptable output or --json for structured output.")
-		os.Exit(exitUsage)
+		usageError("needs a terminal. Use --plain for scriptable output or --json for structured output.")
 	}
 
 	if *plain || *jsonOut {

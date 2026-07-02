@@ -316,6 +316,100 @@ func TestSingleDashVersionRejected(t *testing.T) {
 	}
 }
 
+// TestSingleDashVersionMentionsShorthand ensures the -version rejection
+// error message tells the user to use -v or --version, not just "unknown
+// shorthand 'e'".
+func TestSingleDashVersionMentionsShorthand(t *testing.T) {
+	_, stderr, code := run("-version")
+	if code != 2 {
+		t.Fatalf("expected exit code 2, got %d", code)
+	}
+	if !strings.Contains(stderr, "-v") {
+		t.Errorf("expected error to mention -v shorthand, got: %s", stderr)
+	}
+	if !strings.Contains(stderr, "--version") {
+		t.Errorf("expected error to mention --version, got: %s", stderr)
+	}
+}
+
+// TestSingleDashLongFlagsRejected verifies that all long flag names written
+// with a single dash are rejected with exit code 2 and a clear error message.
+// pflag would otherwise parse these as shorthand groups (e.g. -days as -d -a
+// -y -s), which could silently succeed if every letter were a registered
+// shorthand.
+func TestSingleDashLongFlagsRejected(t *testing.T) {
+	cases := []struct {
+		flag       string
+		suggestion string
+	}{
+		{"-days", "-d or --days"},
+		{"-limit", "-l or --limit"},
+		{"-no-cache", "-n or --no-cache"},
+		{"-plain", "--plain"},
+		{"-json", "--json"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.flag, func(t *testing.T) {
+			_, stderr, code := run(tc.flag)
+			if code != 2 {
+				t.Fatalf("expected exit code 2 for %s, got %d", tc.flag, code)
+			}
+			if !strings.Contains(stderr, "unknown flag") {
+				t.Errorf("expected 'unknown flag' in stderr, got: %s", stderr)
+			}
+			if !strings.Contains(stderr, tc.suggestion) {
+				t.Errorf("expected suggestion %q in stderr, got: %s", tc.suggestion, stderr)
+			}
+		})
+	}
+}
+
+// TestSingleDashVersionWithValueRejected verifies that -version=1.0 (with a
+// value suffix) is also rejected, not silently accepted.
+func TestSingleDashVersionWithValueRejected(t *testing.T) {
+	_, stderr, code := run("-version=1.0")
+	if code != 2 {
+		t.Fatalf("expected exit code 2 for -version=1.0, got %d", code)
+	}
+	if !strings.Contains(stderr, "unknown") {
+		t.Errorf("expected 'unknown' in error, got: %s", stderr)
+	}
+}
+
+// TestValidationErrorsShowUsage verifies that validation errors (negative
+// days, negative limit, mutually exclusive flags) print the usage text
+// before the error message, matching pflag's own error-handling model.
+func TestValidationErrorsShowUsage(t *testing.T) {
+	cases := []struct {
+		name string
+		args []string
+		err  string
+	}{
+		{"negative_days", []string{"--days=-1"}, "positive integer"},
+		{"zero_limit", []string{"--limit=0"}, "positive integer"},
+		{"plain_and_json", []string{"--plain", "--json"}, "mutually exclusive"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			_, stderr, code := run(tc.args...)
+			if code != 2 {
+				t.Fatalf("expected exit code 2, got %d", code)
+			}
+			// Error message should be present.
+			if !strings.Contains(stderr, tc.err) {
+				t.Errorf("expected %q in stderr, got: %s", tc.err, stderr)
+			}
+			// Usage text should be present (printed before the error).
+			if !strings.Contains(stderr, "Usage:") {
+				t.Errorf("expected usage text in stderr, got: %s", stderr)
+			}
+			if !strings.Contains(stderr, "Flags:") {
+				t.Errorf("expected 'Flags:' section in stderr, got: %s", stderr)
+			}
+		})
+	}
+}
+
 func TestHelpShowsEnvVars(t *testing.T) {
 	stdout, stderr, code := run("--help")
 	if code != 0 {
