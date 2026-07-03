@@ -29,7 +29,7 @@ jobs:
   goreleaser:
     needs: release-please
     if: ${{ needs.release-please.outputs.component_release_created == 'true' }}
-    uses: matt-riley/matt-riley-ci/.github/workflows/go-goreleaser.yml@0d1d8e7a149a53fcaaca6e128f62e0e3d8fdf293 # v2
+    uses: matt-riley/matt-riley-ci/.github/workflows/go-goreleaser.yml@071c2c2bbe410f73126d3cefd0a0b6812b3565f6 # v2
     with:
       go-version-file: cli/go.mod
       working-directory: cli
