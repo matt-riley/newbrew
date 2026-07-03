@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.4.0](https://github.com/matt-riley/newbrew/compare/v0.3.0...v0.4.0) (2026-07-03)
+
+
+### Features
+
+* migrate from stdlib flag to pflag with short flags and rich help ([#47](https://github.com/matt-riley/newbrew/issues/47)) ([01a70d9](https://github.com/matt-riley/newbrew/commit/01a70d9aab996c9d37c28ac7d80a3c346fb879c2))
+
+
+### Bug Fixes
+
+* **deps:** update module charm.land/lipgloss/v2 to v2.0.5 ([7a4f97a](https://github.com/matt-riley/newbrew/commit/7a4f97afb094de47ad044e762799733b03355ab2))
+
 ## [0.3.0](https://github.com/matt-riley/newbrew/compare/v0.2.0...v0.3.0) (2026-07-02)
 
 
