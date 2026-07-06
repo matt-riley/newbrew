@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   goreleaser:
-    uses: matt-riley/matt-riley-ci/.github/workflows/go-goreleaser.yml@0d1d8e7a149a53fcaaca6e128f62e0e3d8fdf293 # v2
+    uses: matt-riley/matt-riley-ci/.github/workflows/go-goreleaser.yml@9461001818caa7d1925854445cf053d0a0aac316 # v2
     with:
       go-version-file: cli/go.mod
       working-directory: cli
