@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.1](https://github.com/matt-riley/newbrew/compare/v0.4.0...v0.4.1) (2026-07-10)
+
+
+### Bug Fixes
+
+* **deps:** update module charm.land/bubbletea/v2 to v2.0.8 ([#52](https://github.com/matt-riley/newbrew/issues/52)) ([234b21b](https://github.com/matt-riley/newbrew/commit/234b21b0599a9839346cd8e886521d2608ca157b))
+
 ## [0.4.0](https://github.com/matt-riley/newbrew/compare/v0.3.0...v0.4.0) (2026-07-03)
 
 
