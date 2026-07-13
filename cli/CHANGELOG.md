@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.2](https://github.com/matt-riley/newbrew/compare/v0.4.1...v0.4.2) (2026-07-13)
+
+
+### Bug Fixes
+
+* **deps:** update module charm.land/bubbles/v2 to v2.1.1 ([#54](https://github.com/matt-riley/newbrew/issues/54)) ([f449c45](https://github.com/matt-riley/newbrew/commit/f449c45ac73a32f1c83ea53acec357196a264104))
+
 ## [0.4.1](https://github.com/matt-riley/newbrew/compare/v0.4.0...v0.4.1) (2026-07-10)
 
 
