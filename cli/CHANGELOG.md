@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.4.3](https://github.com/matt-riley/newbrew/compare/v0.4.2...v0.4.3) (2026-08-07)
+
+
+### Bug Fixes
+
+* bump Go toolchain to 1.26.5 for stdlib vulnerabilities ([c38af5e](https://github.com/matt-riley/newbrew/commit/c38af5e6583ee3ed8546f0e0031264911cc41dfa))
+* **deps:** update module golang.org/x/term to v0.45.0 ([da68196](https://github.com/matt-riley/newbrew/commit/da68196e09fb71f9e8416ce99ba5d69a07b83052))
+
 ## [0.4.2](https://github.com/matt-riley/newbrew/compare/v0.4.1...v0.4.2) (2026-07-13)
 
 
