@@ -10,10 +10,11 @@ permissions:
 
 jobs:
   goreleaser:
-    uses: matt-riley/matt-riley-ci/.github/workflows/go-goreleaser.yml@9461001818caa7d1925854445cf053d0a0aac316 # v2
+    uses: matt-riley/matt-riley-ci/.github/workflows/go-goreleaser.yml@2b0008a45ef931f133d0e6af65541d0292e56d82 # v3.0.3
     with:
       go-version-file: cli/go.mod
       working-directory: cli
     secrets:
       github-token: ${{ secrets.RELEASE_PLEASE_TOKEN || secrets.GITHUB_TOKEN }}
-      homebrew-tap-token: ${{ secrets.HOMEBREW_TAP_GITHUB_TOKEN || secrets.RELEASE_PLEASE_TOKEN }}
+      private-key: ${{ secrets.PRIVATE_KEY }}
+      homebrew-tap-token: ${{ secrets.HOMEBREW_TAP_GITHUB_TOKEN }}
