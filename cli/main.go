@@ -2,14 +2,19 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"os"
 	"runtime"
+	"strings"
+
+	"golang.org/x/term"
 
 	tea "charm.land/bubbletea/v2"
+	flag "github.com/spf13/pflag"
 
+	"github.com/matt-riley/newbrew/cache"
 	"github.com/matt-riley/newbrew/fetcher"
+	"github.com/matt-riley/newbrew/output"
 	"github.com/matt-riley/newbrew/tui"
 )
 
@@ -21,19 +26,69 @@ var (
 	date    = "unknown"
 )
 
+// Exit codes:
+//
+//	0 — success
+//	1 — operational failure (network, API, cache)
+//	2 — usage/environment error (bad flag, no TTY, bad value)
 const (
+	exitSuccess   = 0
+	exitOpFailure = 1
+	exitUsage     = 2
+
 	maxLimit = 100
 	maxDays  = 365
 )
 
+func customUsage() {
+	fmt.Fprintf(os.Stderr, `newbrew — discover newly-merged Homebrew formulae
+
+Usage:
+  newbrew [flags]
+
+Flags:
+  -d, --days N       look back this many days for merged Homebrew formulae (default: 5)
+  -l, --limit N      maximum number of pull requests to inspect (default: 50)
+  -n, --no-cache     disable cache reads and writes
+      --plain         output plain text (one formula per line, tab-separated fields)
+      --json          output JSON array of formula objects
+  -v, --version      print version and exit
+  -V                  same as --version
+  -h, --help         show this help message and exit
+
+Environment:
+  GITHUB_TOKEN       GitHub personal access token (public_repo scope).
+                     If unset, newbrew uses unauthenticated API access with lower rate limits.
+  XDG_CACHE_HOME     Cache directory. Defaults to ~/.cache. newbrew caches API
+                     responses in XDG_CACHE_HOME/newbrew/ for 24 hours.
+
+Examples:
+  newbrew                          # show last 5 days, up to 50 formulae
+  newbrew -d 7 -l 100              # show last 7 days, up to 100 formulae
+  newbrew -d 14 -l 50 -n           # skip cache, show last 14 days
+  GITHUB_TOKEN=ghp_... newbrew     # authenticated access for higher rate limits
+`)
+}
+
 func main() {
-	days := flag.Int("days", 5, "look back this many days for merged Homebrew formulae")
-	limit := flag.Int("limit", 50, "maximum number of pull requests to inspect")
-	noCache := flag.Bool("no-cache", false, "disable cache reads and writes")
-	showVersion := flag.Bool("version", false, "print version information and exit")
+	var showVersionFlag bool
+
+	days := flag.IntP("days", "d", 5, "look back this many days for merged Homebrew formulae")
+	limit := flag.IntP("limit", "l", 50, "maximum number of pull requests to inspect")
+	noCache := flag.BoolP("no-cache", "n", false, "disable cache reads and writes")
+	plain := flag.Bool("plain", false, "output plain text (one formula per line, tab-separated fields)")
+	jsonOut := flag.Bool("json", false, "output JSON array of formula objects")
+	flag.BoolVarP(&showVersionFlag, "version", "v", false, "print version information and exit")
+
+	// pflag does not support multiple shorthands on one flag, so we register
+	// -V as a hidden second flag that writes the same variable.  The flag
+	// itself is invisible in --help so we document -V inside customUsage.
+	flag.BoolVarP(&showVersionFlag, "version-V", "V", false, "print version information and exit")
+
+	flag.Usage = customUsage
 	flag.Parse()
 
-	if *showVersion {
+	if showVersionFlag {
 		fmt.Printf("newbrew %s\n", version)
 		fmt.Printf("  commit:  %s\n", commit)
 		fmt.Printf("  date:    %s\n", date)
@@ -41,14 +96,20 @@ func main() {
 		return
 	}
 
+	// Mutually exclusive output modes.
+	if *plain && *jsonOut {
+		fmt.Fprintln(os.Stderr, "newbrew: --plain and --json are mutually exclusive")
+		os.Exit(exitUsage)
+	}
+
 	// Validate flags before constructing the fetcher.
 	if *days <= 0 {
 		fmt.Fprintf(os.Stderr, "newbrew: --days must be a positive integer (got %d)\n", *days)
-		os.Exit(2)
+		os.Exit(exitUsage)
 	}
 	if *limit <= 0 {
 		fmt.Fprintf(os.Stderr, "newbrew: --limit must be a positive integer (got %d)\n", *limit)
-		os.Exit(2)
+		os.Exit(exitUsage)
 	}
 
 	// Cap out-of-range values with a visible warning to stderr.
@@ -61,6 +122,55 @@ func main() {
 		*days = maxDays
 	}
 
+	// Non-TTY detection: require --plain or --json when stdout is not a terminal.
+	isTTY := term.IsTerminal(int(os.Stdout.Fd()))
+	if !isTTY && !*plain && !*jsonOut {
+		fmt.Fprintln(os.Stderr, "newbrew needs a terminal. Use --plain for scriptable output or --json for structured output.")
+		os.Exit(exitUsage)
+	}
+
+	if *plain || *jsonOut {
+		f := fetcher.New(fetcher.Config{
+			Days:  *days,
+			Limit: *limit,
+		})
+
+		var c fetcher.CacheInterface
+		if !*noCache {
+			cacheStore, err := cache.NewCache()
+			if err != nil {
+				fmt.Fprintln(os.Stderr, "Warning:", err)
+			} else {
+				c = cacheStore
+			}
+		}
+
+		result, err := f.FetchAndCache(c)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "Error:", err)
+			os.Exit(exitOpFailure)
+		}
+
+		if len(result.Warnings) > 0 {
+			fmt.Fprintln(os.Stderr, "Warnings:", strings.Join(result.Warnings, " | "))
+		}
+
+		if *plain {
+			if err := output.WritePlain(os.Stdout, result.Formulae); err != nil {
+				fmt.Fprintln(os.Stderr, "Error:", err)
+				os.Exit(exitOpFailure)
+			}
+		} else {
+			if err := output.WriteJSON(os.Stdout, result.Formulae); err != nil {
+				fmt.Fprintln(os.Stderr, "Error:", err)
+				os.Exit(exitOpFailure)
+			}
+		}
+
+		return
+	}
+
+	// TUI mode
 	model := tui.NewModel(tui.Config{
 		Days:     *days,
 		Limit:    *limit,
@@ -74,6 +184,6 @@ func main() {
 
 	if _, err := tea.NewProgram(model).Run(); err != nil {
 		fmt.Fprintf(os.Stderr, "newbrew: %v\n", err)
-		os.Exit(1)
+		os.Exit(exitOpFailure)
 	}
 }

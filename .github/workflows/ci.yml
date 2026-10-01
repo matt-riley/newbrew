@@ -25,7 +25,7 @@ jobs:
         run: python -m unittest discover -s tests -p '*_test.py' -v
 
   ci:
-    uses: matt-riley/matt-riley-ci/.github/workflows/ci.yml@0d1d8e7a149a53fcaaca6e128f62e0e3d8fdf293 # v2
+    uses: matt-riley/matt-riley-ci/.github/workflows/ci.yml@2b0008a45ef931f133d0e6af65541d0292e56d82 # v3.0.3
     with:
       build: true
       test: true
@@ -37,7 +37,7 @@ jobs:
   govulncheck:
     needs: ci
     if: ${{ always() }}
-    uses: matt-riley/matt-riley-ci/.github/workflows/go-security.yml@0d1d8e7a149a53fcaaca6e128f62e0e3d8fdf293 # v2
+    uses: matt-riley/matt-riley-ci/.github/workflows/go-security.yml@2b0008a45ef931f133d0e6af65541d0292e56d82 # v3.0.3
     with:
       go-version-file: cli/go.mod
       working-directory: cli

@@ -1,5 +1,38 @@
 # Changelog
 
+## [0.4.2](https://github.com/matt-riley/newbrew/compare/v0.4.1...v0.4.2) (2026-07-13)
+
+
+### Bug Fixes
+
+* **deps:** update module charm.land/bubbles/v2 to v2.1.1 ([#54](https://github.com/matt-riley/newbrew/issues/54)) ([f449c45](https://github.com/matt-riley/newbrew/commit/f449c45ac73a32f1c83ea53acec357196a264104))
+
+## [0.4.1](https://github.com/matt-riley/newbrew/compare/v0.4.0...v0.4.1) (2026-07-10)
+
+
+### Bug Fixes
+
+* **deps:** update module charm.land/bubbletea/v2 to v2.0.8 ([#52](https://github.com/matt-riley/newbrew/issues/52)) ([234b21b](https://github.com/matt-riley/newbrew/commit/234b21b0599a9839346cd8e886521d2608ca157b))
+
+## [0.4.0](https://github.com/matt-riley/newbrew/compare/v0.3.0...v0.4.0) (2026-07-03)
+
+
+### Features
+
+* migrate from stdlib flag to pflag with short flags and rich help ([#47](https://github.com/matt-riley/newbrew/issues/47)) ([01a70d9](https://github.com/matt-riley/newbrew/commit/01a70d9aab996c9d37c28ac7d80a3c346fb879c2))
+
+
+### Bug Fixes
+
+* **deps:** update module charm.land/lipgloss/v2 to v2.0.5 ([7a4f97a](https://github.com/matt-riley/newbrew/commit/7a4f97afb094de47ad044e762799733b03355ab2))
+
+## [0.3.0](https://github.com/matt-riley/newbrew/compare/v0.2.0...v0.3.0) (2026-07-02)
+
+
+### Features
+
+* add --plain and --json output modes with non-TTY detection ([#43](https://github.com/matt-riley/newbrew/issues/43)) ([74ae81e](https://github.com/matt-riley/newbrew/commit/74ae81e770af0f0e59cd95d23bc0784f242512b9)), closes [#42](https://github.com/matt-riley/newbrew/issues/42)
+
 ## [0.2.0](https://github.com/matt-riley/newbrew/compare/v0.1.7...v0.2.0) (2026-07-01)
 
 
