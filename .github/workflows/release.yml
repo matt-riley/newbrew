@@ -1,6 +1,6 @@
 name: Release
 
-on:
+"on":
   push:
     branches: [main]
   workflow_dispatch:
@@ -23,16 +23,16 @@ jobs:
       config-file: release-please-config.json
       manifest-file: .release-please-manifest.json
       component-output-key: cli
+      cancel-in-progress: false
     secrets:
       token: ${{ secrets.RELEASE_PLEASE_TOKEN || secrets.GITHUB_TOKEN }}
 
   goreleaser:
     needs: release-please
     if: ${{ needs.release-please.outputs.component_release_created == 'true' }}
-    uses: matt-riley/matt-riley-ci/.github/workflows/go-goreleaser.yml@2b0008a45ef931f133d0e6af65541d0292e56d82 # v3.0.3
+    uses: ./.github/workflows/goreleaser.yml
     with:
-      go-version-file: cli/go.mod
-      working-directory: cli
+      tag: ${{ needs.release-please.outputs.component_tag_name }}
     secrets:
       github-token: ${{ secrets.RELEASE_PLEASE_TOKEN || secrets.GITHUB_TOKEN }}
       private-key: ${{ secrets.PRIVATE_KEY }}
