@@ -1,19 +1,83 @@
 name: GoReleaser
 
-on:
-  push:
-    tags:
-      - "v*"
+"on":
+  workflow_call:
+    inputs:
+      tag:
+        description: Release tag returned by release-please
+        required: true
+        type: string
+    secrets:
+      github-token:
+        required: false
+      homebrew-tap-token:
+        required: false
+      private-key:
+        required: false
 
 permissions:
   contents: write
 
 jobs:
   goreleaser:
-    uses: matt-riley/matt-riley-ci/.github/workflows/go-goreleaser.yml@0d1d8e7a149a53fcaaca6e128f62e0e3d8fdf293 # v2
-    with:
-      go-version-file: cli/go.mod
-      working-directory: cli
-    secrets:
-      github-token: ${{ secrets.RELEASE_PLEASE_TOKEN || secrets.GITHUB_TOKEN }}
-      homebrew-tap-token: ${{ secrets.HOMEBREW_TAP_GITHUB_TOKEN || secrets.RELEASE_PLEASE_TOKEN }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    concurrency:
+      # Every release writes to the same Homebrew formula, regardless of tag/ref.
+      group: ${{ github.repository }}:goreleaser-publish
+      cancel-in-progress: false
+    steps:
+      - name: Checkout release tag
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        with:
+          ref: refs/tags/${{ inputs.tag }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Verify tagged checkout
+        env:
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: |
+          test "$(git rev-parse HEAD)" = "$(git rev-parse "refs/tags/$RELEASE_TAG^{commit}")"
+
+      - name: Set up Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7
+        with:
+          go-version-file: cli/go.mod
+          cache: true
+          cache-dependency-path: cli/go.mod
+
+      - name: Create GitHub App token for Homebrew tap
+        id: app-token
+        continue-on-error: true
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3
+        with:
+          app-id: ${{ vars.APP_ID }}
+          private-key: ${{ secrets.private-key }}
+          owner: matt-riley
+          repositories: homebrew-tools
+          permission-contents: write
+
+      - name: Compute GoReleaser args
+        id: goreleaser-args
+        env:
+          TAP_TOKEN: ${{ steps.app-token.outputs.token || secrets.homebrew-tap-token || '' }}
+        run: |
+          if [ -n "$TAP_TOKEN" ]; then
+            echo "value=release --clean" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning title=Homebrew tap publish skipped::No tap token available; configure vars.APP_ID + secrets.PRIVATE_KEY or secrets.HOMEBREW_TAP_GITHUB_TOKEN."
+            echo "value=release --clean --skip=homebrew" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@f06c13b6b1a9625abc9e6e439d9c05a8f2190e94 # v7.2.3
+        with:
+          distribution: goreleaser
+          version: '~> v2'
+          args: ${{ steps.goreleaser-args.outputs.value }}
+          workdir: cli
+        env:
+          GITHUB_TOKEN: ${{ secrets.github-token || github.token }}
+          HOMEBREW_TAP_GITHUB_TOKEN: ${{ steps.app-token.outputs.token || secrets.homebrew-tap-token || '' }}
+          GORELEASER_CURRENT_TAG: ${{ inputs.tag }}
