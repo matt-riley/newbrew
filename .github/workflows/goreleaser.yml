@@ -2,16 +2,17 @@ name: GoReleaser
 
 on:
   push:
-    tags:
-      - "v*"
-
-permissions:
-  contents: write
+    tags: ["v*"]
+  workflow_dispatch:
 
 jobs:
   goreleaser:
-    uses: matt-riley/matt-riley-ci/.github/workflows/go-goreleaser.yml@2b0008a45ef931f133d0e6af65541d0292e56d82 # v3.0.3
+    permissions:
+      contents: write
+    uses: matt-riley/matt-riley-ci/.github/workflows/go-goreleaser.yml@cb986078a5bd4775e5fb05348f3618e41fedf4de # v4
     with:
+      environment: release
+      tap-app-id: ${{ vars.APP_ID }}
       go-version-file: cli/go.mod
       working-directory: cli
     secrets:
