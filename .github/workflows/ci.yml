@@ -11,23 +11,31 @@ permissions:
 
 jobs:
   ci:
-    uses: matt-riley/matt-riley-ci/.github/workflows/ci.yml@2b0008a45ef931f133d0e6af65541d0292e56d82 # v3.0.3
+    permissions:
+      contents: read
+    concurrency:
+      group: ${{ github.workflow }}:${{ github.ref }}:ci
+      cancel-in-progress: true
+    uses: matt-riley/matt-riley-ci/.github/workflows/ci.yml@cb986078a5bd4775e5fb05348f3618e41fedf4de # v4
     with:
       build: true
       test: true
       vet: true
       fmt: true
       lint: true
-      concurrency-suffix: ci
 
   govulncheck:
+    permissions:
+      contents: read
+    concurrency:
+      group: ${{ github.workflow }}:${{ github.ref }}:govulncheck
+      cancel-in-progress: true
     needs: ci
     if: ${{ always() }}
-    uses: matt-riley/matt-riley-ci/.github/workflows/go-security.yml@2b0008a45ef931f133d0e6af65541d0292e56d82 # v3.0.3
+    uses: matt-riley/matt-riley-ci/.github/workflows/go-security.yml@cb986078a5bd4775e5fb05348f3618e41fedf4de # v4
     with:
       go-version-file: cli/go.mod
       working-directory: cli
-      concurrency-suffix: security
 
   coverage:
     needs: ci
