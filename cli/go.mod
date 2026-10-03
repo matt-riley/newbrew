@@ -1,6 +1,6 @@
 module github.com/matt-riley/newbrew
 
-go 1.26.5
+go 1.26.8
 
 require (
 	charm.land/bubbles/v2 v2.1.1
