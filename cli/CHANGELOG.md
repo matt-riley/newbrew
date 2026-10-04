@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.4.3](https://github.com/matt-riley/newbrew/compare/v0.4.2...v0.4.3) (2026-10-04)
+
+
+### Bug Fixes
+
+* bump Go toolchain to 1.26.5 for stdlib vulnerabilities ([c38af5e](https://github.com/matt-riley/newbrew/commit/c38af5e6583ee3ed8546f0e0031264911cc41dfa))
+* **deps:** update module charm.land/bubbles/v2 to v2.2.1 ([7eb3b1a](https://github.com/matt-riley/newbrew/commit/7eb3b1a82c00ae577097f54500e705a57a64ad55))
+* **deps:** update module charm.land/bubbletea/v2 to v2.0.10 ([dbfe032](https://github.com/matt-riley/newbrew/commit/dbfe032bddc16e0324663b63e5ead459f94d904b))
+* **deps:** update module charm.land/lipgloss/v2 to v2.0.6 ([52f501c](https://github.com/matt-riley/newbrew/commit/52f501ca941c17a2dcd42a505b618e5cba032226))
+* **deps:** update module golang.org/x/term to v0.45.0 ([da68196](https://github.com/matt-riley/newbrew/commit/da68196e09fb71f9e8416ce99ba5d69a07b83052))
+* **deps:** update module golang.org/x/term to v0.46.0 ([f87d236](https://github.com/matt-riley/newbrew/commit/f87d236537213c0dbe2dd1f80f02b67eec5c0350))
+
 ## [0.4.2](https://github.com/matt-riley/newbrew/compare/v0.4.1...v0.4.2) (2026-07-13)
 
 
