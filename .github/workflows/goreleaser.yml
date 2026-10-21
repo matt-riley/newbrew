@@ -9,7 +9,7 @@ jobs:
   goreleaser:
     permissions:
       contents: write
-    uses: matt-riley/matt-riley-ci/.github/workflows/go-goreleaser.yml@cb986078a5bd4775e5fb05348f3618e41fedf4de # v4
+    uses: matt-riley/matt-riley-ci/.github/workflows/go-goreleaser.yml@0a310f1286537ed4fd000af4b35cd6459b00448d # v4
     with:
       environment: release
       tap-app-id: ${{ vars.APP_ID }}
