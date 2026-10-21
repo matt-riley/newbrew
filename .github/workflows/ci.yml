@@ -25,29 +25,37 @@ jobs:
         run: python -m unittest discover -s tests -p '*_test.py' -v
 
   ci:
-    uses: matt-riley/matt-riley-ci/.github/workflows/ci.yml@2b0008a45ef931f133d0e6af65541d0292e56d82 # v3.0.3
+    permissions:
+      contents: read
+    concurrency:
+      group: ${{ github.workflow }}:${{ github.ref }}:ci
+      cancel-in-progress: true
+    uses: matt-riley/matt-riley-ci/.github/workflows/ci.yml@0a310f1286537ed4fd000af4b35cd6459b00448d # v4
     with:
       build: true
       test: true
       vet: true
       fmt: true
       lint: true
-      concurrency-suffix: ci
 
   govulncheck:
+    permissions:
+      contents: read
+    concurrency:
+      group: ${{ github.workflow }}:${{ github.ref }}:govulncheck
+      cancel-in-progress: true
     needs: ci
     if: ${{ always() }}
-    uses: matt-riley/matt-riley-ci/.github/workflows/go-security.yml@2b0008a45ef931f133d0e6af65541d0292e56d82 # v3.0.3
+    uses: matt-riley/matt-riley-ci/.github/workflows/go-security.yml@0a310f1286537ed4fd000af4b35cd6459b00448d # v4
     with:
       go-version-file: cli/go.mod
       working-directory: cli
-      concurrency-suffix: security
 
   coverage:
     needs: ci
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6
         with:
           go-version-file: cli/go.mod
