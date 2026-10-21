@@ -1,6 +1,6 @@
 name: Release
 
-on:
+"on":
   push:
     branches: [main]
   workflow_dispatch:
@@ -27,25 +27,17 @@ jobs:
       config-file: release-please-config.json
       manifest-file: .release-please-manifest.json
       component-output-key: cli
+      cancel-in-progress: false
     secrets:
       token: ${{ secrets.RELEASE_PLEASE_TOKEN || secrets.GITHUB_TOKEN }}
 
-  dispatch-goreleaser:
+  goreleaser:
     needs: release-please
     if: ${{ needs.release-please.outputs.component_release_created == 'true' }}
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      actions: write
-    steps:
-      - name: Start tag publisher when Release Please uses GITHUB_TOKEN
-        env:
-          GH_TOKEN: ${{ github.token }}
-          TAG: ${{ needs.release-please.outputs.component_tag_name }}
-          RELEASE_TOKEN_AVAILABLE: ${{ secrets.RELEASE_PLEASE_TOKEN != '' }}
-        run: |
-          if [ "$RELEASE_TOKEN_AVAILABLE" = true ]; then
-            echo 'The release token starts the tag publisher automatically.'
-          else
-            gh workflow run goreleaser.yml --repo "$GITHUB_REPOSITORY" --ref "$TAG"
-          fi
+    uses: ./.github/workflows/goreleaser.yml
+    with:
+      tag: ${{ needs.release-please.outputs.component_tag_name }}
+    secrets:
+      github-token: ${{ secrets.RELEASE_PLEASE_TOKEN || secrets.GITHUB_TOKEN }}
+      private-key: ${{ secrets.PRIVATE_KEY }}
+      homebrew-tap-token: ${{ secrets.HOMEBREW_TAP_GITHUB_TOKEN }}
