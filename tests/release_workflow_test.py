@@ -35,7 +35,15 @@ class ReleaseWorkflowTest(unittest.TestCase):
         fallback = '${{ secrets.RELEASE_PLEASE_TOKEN || secrets.GITHUB_TOKEN }}'
         self.assertEqual(fallback, jobs['release-please']['secrets']['token'])
         self.assertEqual(fallback, jobs['goreleaser']['secrets']['github-token'])
-        self.assertFalse(jobs['release-please']['with']['cancel-in-progress'])
+        allowed_inputs = {
+            'config-file',
+            'runner',
+            'manifest-file',
+            'component-output-key',
+            'target-branch',
+            'environment',
+        }
+        self.assertLessEqual(set(jobs['release-please']['with'].keys()), allowed_inputs)
         self.assertEqual('${{ secrets.github-token || github.token }}', self.step('Run GoReleaser')['env']['GITHUB_TOKEN'])
 
     def test_publish_lock_is_shared_across_tags(self):
