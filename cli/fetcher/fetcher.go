@@ -130,6 +130,11 @@ func New(config Config) *Fetcher {
 		version = "dev"
 	}
 
+	apiBaseURL := "https://api.github.com"
+	if override := strings.TrimSpace(os.Getenv("NEWBREW_GITHUB_API_BASE")); override != "" {
+		apiBaseURL = strings.TrimRight(override, "/")
+	}
+
 	return &Fetcher{
 		httpClient: httpClient,
 		now:        now,
@@ -137,7 +142,7 @@ func New(config Config) *Fetcher {
 		limit:      limit,
 		token:      token,
 		version:    version,
-		apiBaseURL: "https://api.github.com",
+		apiBaseURL: apiBaseURL,
 		repoOwner:  defaultRepoOwner,
 		repoName:   defaultRepoName,
 	}
