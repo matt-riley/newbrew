@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Set up Python
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
         with:
@@ -30,7 +30,7 @@ jobs:
     concurrency:
       group: ${{ github.workflow }}:${{ github.ref }}:ci
       cancel-in-progress: true
-    uses: matt-riley/matt-riley-ci/.github/workflows/ci.yml@0a310f1286537ed4fd000af4b35cd6459b00448d # v4
+    uses: matt-riley/matt-riley-ci/.github/workflows/ci.yml@e802c1e932579d1e840f6dd4f8316458d1f96983 # v4
     with:
       build: true
       test: true
@@ -46,7 +46,7 @@ jobs:
       cancel-in-progress: true
     needs: ci
     if: ${{ always() }}
-    uses: matt-riley/matt-riley-ci/.github/workflows/go-security.yml@0a310f1286537ed4fd000af4b35cd6459b00448d # v4
+    uses: matt-riley/matt-riley-ci/.github/workflows/go-security.yml@e802c1e932579d1e840f6dd4f8316458d1f96983 # v4
     with:
       go-version-file: cli/go.mod
       working-directory: cli
