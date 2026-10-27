@@ -2,6 +2,9 @@ package main_test
 
 import (
 	"bytes"
+	"io"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -49,6 +52,27 @@ func run(args ...string) (stdout, stderr string, exitCode int) {
 		}
 	}
 	return stdout, stderr, exitCode
+}
+
+// startMockGitHubAPI points NEWBREW_GITHUB_API_BASE at a local stub GitHub API so
+// behavioural tests do not depend on live Homebrew merge activity.
+func startMockGitHubAPI(t *testing.T, searchBody string) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/search/issues":
+			_, _ = io.WriteString(w, searchBody)
+		case "/repos/Homebrew/homebrew-core/pulls/101/files":
+			rawURL := "http://" + r.Host + "/raw/fixture.rb"
+			_, _ = io.WriteString(w, `[{"filename":"Formula/fixture.rb","status":"added","raw_url":"`+rawURL+`"}]`)
+		case "/raw/fixture.rb":
+			_, _ = io.WriteString(w, "class Fixture < Formula\n  desc \"Fixture tool for tests\"\n  homepage \"https://fixture.example.com\"\nend\n")
+		default:
+			t.Errorf("unexpected GitHub API path: %s", r.URL.Path)
+			http.Error(w, "not found", http.StatusNotFound)
+		}
+	}))
+	t.Cleanup(server.Close)
+	t.Setenv("NEWBREW_GITHUB_API_BASE", server.URL)
 }
 
 func TestHelpOutputContainsFlags(t *testing.T) {
@@ -173,62 +197,68 @@ func TestNonTTYWithoutFlagExitsTwo(t *testing.T) {
 	}
 }
 
-// TestPlainOutputFormat runs --plain and verifies the output is tab-separated
-// with the correct number of fields when the fetch succeeds. If the GitHub API
-// is unreachable the test still passes as long as the failure is an operational
-// error (exit 1), not a flag-handling error (exit 2).
+// TestPlainOutputFormat runs --plain against a stub GitHub API and verifies
+// tab-separated output with the expected fields.
 func TestPlainOutputFormat(t *testing.T) {
+	startMockGitHubAPI(t, `{"items":[{"number":101,"title":"fixture 1.0.0 (new formula)","closed_at":"2026-06-14T10:00:00Z"}]}`)
+
 	stdout, stderr, code := run("--plain", "--days=1", "--limit=1", "--no-cache")
 	if code == 2 {
 		t.Fatalf("--plain should not cause exit 2 (usage error), got stderr: %s", stderr)
 	}
-	if code == 1 {
-		// Operational error (e.g. network) is acceptable — not a flag bug.
-		if !strings.Contains(stderr, "Error:") {
-			t.Errorf("expected 'Error:' in stderr for operational failure, got %q", stderr)
-		}
-		return
-	}
 	if code != 0 {
 		t.Fatalf("unexpected exit code %d, stderr: %s", code, stderr)
 	}
 
-	// On success, verify tab-separated format: 4 fields per line.
-	lines := strings.Split(strings.TrimRight(stdout, "\n"), "\n")
-	if len(lines) == 0 {
-		t.Fatal("expected at least one line of output")
-	}
-	for i, line := range lines {
-		fields := strings.Split(line, "	")
-		if len(fields) != 4 {
-			t.Errorf("line %d: expected 4 tab-separated fields, got %d: %q", i, len(fields), line)
-		}
+	want := "fixture 1.0.0 (new formula)\tFixture tool for tests\thttps://fixture.example.com\t2026-06-14\n"
+	if stdout != want {
+		t.Errorf("unexpected --plain output:\ngot:  %q\nwant: %q", stdout, want)
 	}
 }
 
-// TestJsonOutputFormat runs --json and verifies the output is a valid JSON
-// array when the fetch succeeds. If the GitHub API is unreachable the test
-// still passes as long as the failure is operational (exit 1), not a
-// flag-handling error (exit 2).
+// TestPlainOutputFormatEmptyResults verifies that a successful fetch with no
+// formulae produces no stdout lines (not a single empty line).
+func TestPlainOutputFormatEmptyResults(t *testing.T) {
+	startMockGitHubAPI(t, `{"items":[]}`)
+
+	stdout, stderr, code := run("--plain", "--days=1", "--limit=1", "--no-cache")
+	if code != 0 {
+		t.Fatalf("unexpected exit code %d, stderr: %s", code, stderr)
+	}
+	if stdout != "" {
+		t.Errorf("expected empty stdout for zero formulae, got %q", stdout)
+	}
+}
+
+// TestJsonOutputFormat runs --json against a stub GitHub API and verifies the
+// encoded array shape and field values.
 func TestJsonOutputFormat(t *testing.T) {
+	startMockGitHubAPI(t, `{"items":[{"number":101,"title":"fixture 1.0.0 (new formula)","closed_at":"2026-06-14T10:00:00Z"}]}`)
+
 	stdout, stderr, code := run("--json", "--days=1", "--limit=1", "--no-cache")
 	if code == 2 {
 		t.Fatalf("--json should not cause exit 2 (usage error), got stderr: %s", stderr)
 	}
-	if code == 1 {
-		if !strings.Contains(stderr, "Error:") {
-			t.Errorf("expected 'Error:' in stderr for operational failure, got %q", stderr)
-		}
-		return
-	}
 	if code != 0 {
 		t.Fatalf("unexpected exit code %d, stderr: %s", code, stderr)
 	}
 
-	// On success, verify the output is a JSON array.
-	stdout = strings.TrimSpace(stdout)
-	if !strings.HasPrefix(stdout, "[") || !strings.HasSuffix(stdout, "]") {
-		t.Errorf("expected JSON array output, got: %s", stdout)
+	want := `[{"PRTitle":"fixture 1.0.0 (new formula)","Description":"Fixture tool for tests","Homepage":"https://fixture.example.com","MergedAt":"2026-06-14T10:00:00Z"}]` + "\n"
+	if stdout != want {
+		t.Errorf("unexpected --json output:\ngot:  %q\nwant: %q", stdout, want)
+	}
+}
+
+// TestJsonOutputFormatEmptyResults verifies that zero formulae still emit [].
+func TestJsonOutputFormatEmptyResults(t *testing.T) {
+	startMockGitHubAPI(t, `{"items":[]}`)
+
+	stdout, stderr, code := run("--json", "--days=1", "--limit=1", "--no-cache")
+	if code != 0 {
+		t.Fatalf("unexpected exit code %d, stderr: %s", code, stderr)
+	}
+	if stdout != "[]\n" {
+		t.Errorf("expected empty JSON array, got %q", stdout)
 	}
 }
 
