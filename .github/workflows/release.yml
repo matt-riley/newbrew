@@ -22,7 +22,7 @@ jobs:
       contents: write
       issues: write
       pull-requests: write
-    uses: matt-riley/matt-riley-ci/.github/workflows/release-please.yml@e802c1e932579d1e840f6dd4f8316458d1f96983 # v4
+    uses: matt-riley/matt-riley-ci/.github/workflows/release-please.yml@002d16c00bc74ebced433f0a16187c9b13451194 # v4.2.0
     with:
       config-file: release-please-config.json
       manifest-file: .release-please-manifest.json
