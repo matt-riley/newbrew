@@ -5,9 +5,9 @@ go 1.27.4
 require (
 	charm.land/bubbles/v2 v2.2.1
 	charm.land/bubbletea/v2 v2.1.1
-	charm.land/lipgloss/v2 v2.0.6
-	github.com/spf13/pflag v1.0.10
-	golang.org/x/term v0.47.0
+	charm.land/lipgloss/v2 v2.1.0
+	github.com/spf13/pflag v1.1.0
+	golang.org/x/term v0.48.0
 )
 
 require (
@@ -27,5 +27,5 @@ require (
 	github.com/sahilm/fuzzy v0.1.3 // indirect
 	github.com/xo/terminfo v1.0.0 // indirect
 	golang.org/x/sync v0.22.0 // indirect
-	golang.org/x/sys v0.49.0 // indirect
+	golang.org/x/sys v0.50.0 // indirect
 )
